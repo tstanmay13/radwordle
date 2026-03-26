@@ -1,4 +1,8 @@
 import { redirect } from 'next/navigation';
+
+// Cache archive pages for 1 hour - puzzle data doesn't change for past days
+export const revalidate = 3600;
+
 import { getPuzzleForDay, getHintsFromPuzzle, getAllConditions } from '@/lib/supabase';
 import { getDayNumber } from '@/lib/gameLogic';
 import GamePage from '@/components/GamePage';

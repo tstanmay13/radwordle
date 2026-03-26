@@ -44,6 +44,7 @@ export default function ArchiveBrowser() {
             <Link
               key={day.dayNumber}
               href={isToday ? '/' : `/archive/${day.dayNumber}`}
+              prefetch={false}
               className={`relative flex flex-col items-center justify-center rounded-lg p-2.5 sm:p-3 transition-all duration-150 ${
                 isWon
                   ? 'bg-success/80 hover:bg-success ring-1 ring-success/50'

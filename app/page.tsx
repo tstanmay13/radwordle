@@ -2,8 +2,8 @@ import { getTodaysPuzzle, getHintsFromPuzzle, getAllConditions } from '@/lib/sup
 import { getDayNumber } from '@/lib/gameLogic';
 import GamePage from '@/components/GamePage';
 
-// Disable caching - puzzle changes daily at midnight EST
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds - puzzle changes daily at midnight EST
+export const revalidate = 60;
 
 export default async function Home() {
   let dayNumber: number;
