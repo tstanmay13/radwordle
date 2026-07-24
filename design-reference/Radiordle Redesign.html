@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Radiordle — Full Mockup (Desktop + Mobile)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'Arial', 'Helvetica', 'sans-serif'],
+          baloo: ['"Baloo 2"', 'system-ui', 'sans-serif'],
+        },
+      }
+    }
+  }
+</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+  html, body { margin: 0; background: #0a0f1f; font-family: 'Inter', sans-serif; }
+  * { box-sizing: border-box; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modalEnter { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes hintReveal { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bgDriftA { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(5%,4%,0) scale(1.12); } }
+  @keyframes bgDriftB { from { transform: translate3d(0,0,0) scale(1.05); } to { transform: translate3d(-4%,-3%,0) scale(0.96); } }
+  @media (prefers-reduced-motion: reduce) { [style*="bgDrift"] { animation: none !important; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react" src="radiordle-core.jsx"></script>
+<script type="text/babel" data-presets="env,react" src="radiordle-modals.jsx"></script>
+<script type="text/babel" data-presets="env,react" src="radiordle-screens.jsx"></script>
+<script type="text/babel" data-presets="env,react" src="radiordle-install.jsx"></script>
+<script type="text/babel" data-presets="env,react" src="radiordle-app.jsx"></script>
+</body>
+</html>
