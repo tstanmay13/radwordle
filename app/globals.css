@@ -294,7 +294,7 @@ body {
 
 /* =========================================================
    Redesign keyframes (design foundation — used by later chunks:
-   toasts, modals, hint reveal, animated background)
+   toasts, modals, hint reveal)
    ========================================================= */
 @keyframes toastIn {
   from { opacity: 0; transform: translate(-50%, -10px); }
@@ -311,19 +311,4 @@ body {
 @keyframes hintReveal {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
-}
-@keyframes bgDriftA {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(5%, 4%, 0) scale(1.12); }
-}
-@keyframes bgDriftB {
-  from { transform: translate3d(0, 0, 0) scale(1.05); }
-  to { transform: translate3d(-4%, -3%, 0) scale(0.96); }
-}
-
-/* Respect reduced-motion for the ambient background drift */
-@media (prefers-reduced-motion: reduce) {
-  [style*="bgDrift"] {
-    animation: none !important;
-  }
 }

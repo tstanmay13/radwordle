@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ZoomIn } from 'lucide-react';
 import { Puzzle, Hint, Condition } from '@/lib/supabase';
 import GameClient from './GameClient';
+import PageBackground from './PageBackground';
 import StatsModal from './StatsModal';
 import FeedbackModal from './FeedbackModal';
 import ImageZoomModal from './ImageZoomModal';
@@ -102,37 +103,8 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
 
   return (
     <div className="min-h-screen-safe relative overflow-y-auto overflow-x-hidden" style={{ minHeight: 'var(--full-vh)' }}>
-      {/* Gradient Background - fixed on desktop so it doesn't scroll with content */}
-      <div className="absolute sm:fixed inset-0 bg-gradient-to-br from-page-bg via-page-bg-mid to-page-bg pointer-events-none">
-        {/* Background decorative medical images - horizontal on desktop, vertical on mobile */}
-        {/* Desktop layout - horizontal */}
-        <div className="hidden sm:flex absolute inset-0 opacity-20 items-end justify-center pb-8">
-          <div className="relative w-[900px] h-[500px]">
-            <div className="absolute left-0 top-1/2 w-96 h-96 bg-[url('/placeholder-xray.png')] bg-contain bg-no-repeat opacity-40" style={{ transform: 'translateY(-50%) rotate(-8deg)' }}></div>
-            <div className="absolute left-1/2 top-1/2 w-80 h-80 bg-[url('/placeholder-scan.png')] bg-contain bg-no-repeat opacity-35" style={{ transform: 'translate(-50%, -50%) rotate(5deg)' }}></div>
-            <div className="absolute right-0 top-1/2 w-72 h-72 bg-[url('/placeholder-ct.png')] bg-contain bg-no-repeat opacity-30 rounded-full" style={{ transform: 'translateY(-50%) rotate(-12deg)' }}></div>
-          </div>
-        </div>
-        {/* Mobile layout - triangle arrangement behind hint/guess area (bottom half of screen) */}
-        <div className="flex sm:hidden absolute inset-0 opacity-20">
-          <div className="absolute bottom-0 left-0 right-0 h-[55%]">
-            {/* Top center image */}
-            <div className="absolute left-1/2 top-[0%] w-72 h-72 bg-[url('/placeholder-xray.png')] bg-contain bg-no-repeat opacity-40" style={{ transform: 'translateX(-50%) rotate(-8deg)' }}></div>
-            {/* Bottom left image */}
-            <div className="absolute left-[5%] bottom-[5%] w-64 h-64 bg-[url('/placeholder-scan.png')] bg-contain bg-no-repeat opacity-35" style={{ transform: 'rotate(5deg)' }}></div>
-            {/* Bottom right image */}
-            <div className="absolute right-[5%] bottom-[5%] w-64 h-64 bg-[url('/placeholder-ct.png')] bg-contain bg-no-repeat opacity-30 rounded-full" style={{ transform: 'rotate(-12deg)' }}></div>
-          </div>
-        </div>
-
-        {/* Radial Vignette - Static, Performance Optimized */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse at center, transparent 0%, transparent 45%, rgba(0, 0, 0, 0.3) 70%, rgba(0, 0, 0, 0.75) 88%, rgba(0, 0, 0, 0.9) 100%)'
-          }}
-        ></div>
-      </div>
+      {/* Animated DICOM/PACS background (fixed on desktop so it doesn't scroll) */}
+      <PageBackground />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen-safe flex flex-col" style={{ minHeight: 'var(--full-vh)' }}>
