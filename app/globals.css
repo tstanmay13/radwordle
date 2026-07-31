@@ -26,7 +26,10 @@
 
   /* Glass surface tokens — shared by navbar, modals, and glass primitives */
   --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-blur: blur(22px) saturate(160%);
+  /* Blur radius kept modest: backdrop-filter re-samples every scroll frame, and
+     cost scales with radius. 14px still reads as glass but is much cheaper than
+     the original 22px, which noticeably smooths scrolling. */
+  --glass-blur: blur(14px) saturate(140%);
   --glass-border: 1px solid rgba(255, 255, 255, 0.14);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }

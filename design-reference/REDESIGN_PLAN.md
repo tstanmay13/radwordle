@@ -58,24 +58,24 @@ main  (live / Vercel)  ───────────────────
 ## Chunks (do in order — later ones build on the foundation)
 
 ### Foundation (do first — everything depends on these)
-- [ ] **01 · Design tokens & fonts** — port `C`/`GLASS` values + Baloo 2 / Inter fonts + the
+- [x] **01 · Design tokens & fonts** — port `C`/`GLASS` values + Baloo 2 / Inter fonts + the
   `@keyframes` (toastIn, fadeIn, modalEnter, hintReveal, bgDriftA/B) into `globals.css` and
   `layout.tsx`. Low risk, little visual change on its own; unblocks the rest.
-- [ ] **02 · Animated background** — new `PageBackground.tsx` (aurora blobs + grain + vignette;
+- [x] **02 · Animated background** — new `PageBackground.tsx` (aurora blobs + grain + vignette;
   start with the `annotated` "Classic" DICOM variant which the mockup ships). High visual impact,
   self-contained. Wire into `GamePage.tsx` behind the content.
-- [ ] **03 · Glass primitives** — shared `GlassIconButton` + `AccentButton` (amber gradient).
+- [x] **03 · Glass primitives** — shared `GlassIconButton` + `AccentButton` (amber gradient).
   Used by the navbar and modals; build once, reuse.
 
 ### Core game screen
-- [ ] **04 · Top navbar** — glass bar, centered wordmark, Stats/About/Feedback on the left,
+- [x] **04 · Top navbar** — glass bar, centered wordmark, Stats/About/Feedback on the left,
   Archives accent button right; mobile hamburger menu with Install/About/Feedback/Stats.
-- [ ] **05 · X-ray card** — 16:9 black card, result-colored border (green/yellow/red ring),
+- [x] **05 · X-ray card** — 16:9 black card, result-colored border (green/yellow/red ring),
   zoom affordance bottom-right.
-- [ ] **06 · Hint cards** — colored-by-next-guess cards, numbered badge, reveal animation.
-- [ ] **07 · Guess bar + autocomplete** — glass input with "Guess N/5" label, amber Submit,
+- [x] **06 · Hint cards** — colored-by-next-guess cards, numbered badge, reveal animation.
+- [x] **07 · Guess bar + autocomplete** — glass input with "Guess N/5" label, amber Submit,
   dropdown styling, disabled "previously selected" rows, inline error state.
-- [ ] **08 · Toasts** — correct/partial/incorrect/copied toast styling + timing.
+- [x] **08 · Toasts** — correct/partial/incorrect/copied toast styling + timing.
 
 ### Modals
 - [ ] **09 · Results modal** — biggest one: header w/ result tiles + gradient answer, collapsible
