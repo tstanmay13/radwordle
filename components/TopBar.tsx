@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { BarChart3, Info, MessageCircle, Archive, Menu } from 'lucide-react';
+import { BarChart3, Info, MessageCircle, Archive, Menu, Download } from 'lucide-react';
 import GlassIconButton from './ui/GlassIconButton';
 import AccentButton from './ui/AccentButton';
 
@@ -15,14 +15,11 @@ import AccentButton from './ui/AccentButton';
  * working:
  *   - Desktop (>= sm): Stats / About / Feedback on the left, centered wordmark,
  *     Archives accent button on the right.
- *   - Mobile (< sm): hamburger menu (About / Feedback / Stats), centered
- *     wordmark, compact Archive accent button.
+ *   - Mobile (< sm): hamburger menu (Install / About / Feedback / Stats),
+ *     centered wordmark, compact Archive accent button.
  *
  * The bar uses the shared glass tokens. Its `backdrop-filter` blur sits over the
  * static (non-animated) page background, so it only re-rasterizes on scroll.
- *
- * Install (PWA) lives in a later, optional chunk and is intentionally omitted
- * from the mobile menu for now.
  */
 interface TopBarProps {
   onStats: () => void;
@@ -113,6 +110,17 @@ export default function TopBar({ onStats, onFeedback }: TopBarProps) {
             {/* Click-away layer */}
             <div className="fixed inset-0 z-[55]" onClick={() => setMenuOpen(false)} aria-hidden="true" />
             <div className="absolute left-3 top-[60px] z-[61] rounded-xl overflow-hidden" style={menuStyle}>
+              <Link
+                href="/install"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 w-full px-4 py-3 text-left text-white font-baloo-2 font-semibold
+                           border-b border-white/10 transition-colors hover:bg-white/10"
+              >
+                <span className="text-white/80">
+                  <Download size={18} />
+                </span>
+                Install
+              </Link>
               <Link
                 href="/about"
                 onClick={() => setMenuOpen(false)}

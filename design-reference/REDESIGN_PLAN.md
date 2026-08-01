@@ -85,9 +85,9 @@ main  (live / Vercel)  ───────────────────
 - [x] **12 · Zoom modal** — scroll-to-zoom / drag-to-pan overlay.
 
 ### Secondary screens
-- [ ] **13 · About page** — glass cards, How to Play, team, disclaimer.
-- [ ] **14 · Archive page** — day grid with won/lost/today badges.
-- [ ] **15 · Install / PWA screen** (optional / new feature) — Safari + Chrome step cards.
+- [x] **13 · About page** — glass cards, How to Play, team, disclaimer.
+- [x] **14 · Archive page** — day grid with won/lost/today badges.
+- [x] **15 · Install / PWA screen** (optional / new feature) — Safari + Chrome step cards.
 
 ### Ship
 - [ ] **16 · Final review** — open `feature/ui-redesign → main`, full regression (tests, e2e,
