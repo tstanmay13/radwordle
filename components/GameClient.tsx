@@ -324,20 +324,15 @@ export default function GameClient({
             </button>
           </div>
         ) : (
-          <>
-            <div className="mb-3 text-white/80 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-              <p className="text-lg tracking-wide font-baloo-2 font-semibold">
-                Guess {gameState.guesses.length + 1} / {MAX_GUESSES}
-              </p>
-            </div>
-            <DiagnosisAutocomplete
-              conditions={conditions}
-              onSubmit={handleSubmit}
-              onDropdownStateChange={handleDropdownStateChange}
-              previousGuesses={gameState.guesses}
-              disabled={!consentGiven}
-            />
-          </>
+          <DiagnosisAutocomplete
+            conditions={conditions}
+            onSubmit={handleSubmit}
+            onDropdownStateChange={handleDropdownStateChange}
+            previousGuesses={gameState.guesses}
+            disabled={!consentGiven}
+            current={gameState.guesses.length + 1}
+            total={MAX_GUESSES}
+          />
         )}
       </div>
 
@@ -365,13 +360,8 @@ export default function GameClient({
           </div>
         ) : (
           <>
-            {/* Guesses counter - in flow */}
-            <div className="mb-3 text-white/80 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-              <p className="text-lg tracking-wide font-baloo-2 font-semibold">
-                Guess {gameState.guesses.length + 1} / {MAX_GUESSES}
-              </p>
-            </div>
-            {/* Input sticky at bottom on mobile - positions directly above keyboard */}
+            {/* Input sticky at bottom on mobile - positions directly above keyboard.
+                The "Guess N / 5" label now lives inside the input pill. */}
             <div className="fixed bottom-0 left-0 right-0 px-4 pb-[env(safe-area-inset-bottom,0px)] bg-gradient-to-t from-page-bg-dark via-page-bg-dark/80 to-transparent pt-4 z-40">
               <DiagnosisAutocomplete
                 conditions={conditions}
@@ -380,6 +370,8 @@ export default function GameClient({
                 previousGuesses={gameState.guesses}
                 isMobile={true}
                 disabled={!consentGiven}
+                current={gameState.guesses.length + 1}
+                total={MAX_GUESSES}
               />
             </div>
             {/* Spacer to prevent content from being hidden behind fixed input */}

@@ -124,10 +124,11 @@ test.describe('Mobile Responsiveness', () => {
   test('should show stats/archive buttons on mobile', async ({ page }) => {
     await waitForGameLoad(page);
 
-    // Stats button should be visible
-    await expect(page.getByText('Stats').first()).toBeVisible();
+    // Archive accent button is visible directly in the mobile top bar
+    await expect(page.getByRole('link', { name: /archive/i }).first()).toBeVisible();
 
-    // Archives button should be visible
-    await expect(page.getByText('Archives').first()).toBeVisible();
+    // Stats lives inside the mobile hamburger menu — open it, then it's visible
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await expect(page.getByText('Stats').first()).toBeVisible();
   });
 });

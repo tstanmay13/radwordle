@@ -2,11 +2,11 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ZoomIn } from 'lucide-react';
 import { Puzzle, Hint, Condition } from '@/lib/supabase';
 import GameClient from './GameClient';
 import PageBackground from './PageBackground';
+import TopBar from './TopBar';
 import StatsModal from './StatsModal';
 import FeedbackModal from './FeedbackModal';
 import ImageZoomModal from './ImageZoomModal';
@@ -81,13 +81,17 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
   // Determine image border color based on first guess result
   // The first guess is made with only the image, so it reflects how helpful the image was
   const firstGuessResult = gameState?.guessResults[0];
-  let imageBorderStyle = '';
+  // Result-colored border on the X-ray card (design: XrayCard). A subtle neutral
+  // border shows before the first guess, then transitions to the softer
+  // success/warning/error ring color. Border-color only — a static paint with no
+  // glow filter — so the feedback stays cheap.
+  let imageBorderColor = 'border-white/[0.12]';
   if (firstGuessResult === 'correct') {
-    imageBorderStyle = 'ring-4 ring-success shadow-[0_0_20px_rgba(64,119,99,0.6)]';
+    imageBorderColor = 'border-ring-success';
   } else if (firstGuessResult === 'partial') {
-    imageBorderStyle = 'ring-4 ring-warning shadow-[0_0_20px_rgba(246,214,86,0.6)]';
+    imageBorderColor = 'border-ring-warning';
   } else if (firstGuessResult === 'incorrect') {
-    imageBorderStyle = 'ring-4 ring-error shadow-[0_0_20px_rgba(158,74,74,0.6)]';
+    imageBorderColor = 'border-ring-error';
   }
 
   // Annotated image: show after first guess if a valid URL is provided
@@ -108,85 +112,11 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
 
       {/* Content */}
       <div className="relative z-10 min-h-screen-safe flex flex-col" style={{ minHeight: 'var(--full-vh)' }}>
-        {/* Header with Logo and Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center p-3 sm:px-6 sm:py-4 gap-0 sm:gap-0">
-          {/* Top row on mobile: Archives and Stats buttons */}
-          <div className="flex justify-between items-center sm:contents">
-            {/* Archives Button - Left side container with fixed width on desktop */}
-            <div className="sm:flex-1 sm:flex sm:justify-start">
-              <Link
-                href="/archive"
-                className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[36px] sm:min-h-[40px] bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors"
-              >
-                <span className="text-base sm:text-xl">📁</span>
-                <span className="font-bold font-baloo-2 text-xs sm:text-base">Archives</span>
-              </Link>
-            </div>
-
-            {/* Logo and Title - Hidden on mobile, shown inline on larger screens */}
-            <div className="hidden sm:flex items-center gap-1 drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)]">
-              <div className="relative w-16 h-16">
-                <Image
-                  src="/radle_icon.svg"
-                  alt="Radiordle Icon"
-                  width={64}
-                  height={64}
-                  className="object-contain"
-                />
-              </div>
-              <h1 className="text-4xl md:text-[3.375rem] text-white font-baloo-2 font-extrabold tracking-tight">
-                Radiordle
-              </h1>
-            </div>
-
-            {/* Stats and Feedback Buttons - Right side container with fixed width on desktop */}
-            <div className="sm:flex-1 sm:flex sm:justify-end">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Link
-                  href="/about"
-                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[36px] sm:min-h-[40px] bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors"
-                  title="Learn More"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5">
-                    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
-                  </svg>
-                  <span className="hidden sm:inline font-bold font-baloo-2 text-xs sm:text-base">About</span>
-                </Link>
-                <button
-                  onClick={() => setShowFeedback(true)}
-                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[36px] sm:min-h-[40px] bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors"
-                  title="Send Feedback"
-                >
-                  <span className="text-base sm:text-xl">💬</span>
-                  <span className="hidden sm:inline font-bold font-baloo-2 text-xs sm:text-base">Feedback</span>
-                </button>
-                <button
-                  onClick={() => setShowStats(true)}
-                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[36px] sm:min-h-[40px] bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors"
-                >
-                  <span className="text-base sm:text-xl">📊</span>
-                  <span className="font-bold font-baloo-2 text-xs sm:text-base">Stats</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Logo and Title - Second row on mobile only */}
-          <div className="flex sm:hidden items-center justify-center gap-1.5 drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)] mt-0.5 -mb-0.5">
-            <div className="relative w-14 h-14">
-              <Image
-                src="/radle_icon.svg"
-                alt="Radiordle Icon"
-                width={56}
-                height={56}
-                className="object-contain"
-              />
-            </div>
-            <h1 className="text-[2.5rem] text-white font-baloo-2 font-extrabold tracking-tight">
-              Radiordle
-            </h1>
-          </div>
-        </div>
+        {/* Glass top navigation bar */}
+        <TopBar
+          onStats={() => setShowStats(true)}
+          onFeedback={() => setShowFeedback(true)}
+        />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col items-center justify-start sm:justify-start px-4 pt-2 pb-4 sm:pb-4 sm:pt-4">
@@ -194,7 +124,7 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
           {/* Medical Image Display - sticky on mobile so it stays visible when keyboard opens */}
           <div className="w-full max-w-3xl lg:max-w-4xl mb-3 sm:mb-6 sticky top-0 sm:static z-20 pb-2">
             <div
-              className={`relative w-full aspect-[16/9] bg-black rounded-lg overflow-hidden shadow-2xl transition-all duration-300 cursor-pointer ${imageBorderStyle}${showImagePulse ? ' animate-image-pulse' : ''}`}
+              className={`relative w-full aspect-[16/9] bg-black rounded-lg overflow-hidden border-2 ${imageBorderColor} shadow-[0_10px_34px_rgba(0,0,0,0.5)] transition-colors duration-300 cursor-pointer${showImagePulse ? ' animate-image-pulse' : ''}`}
               onClick={() => { if (puzzle.image_url && Date.now() - zoomClosedAt.current > 300) { setZoomKey(k => k + 1); setShowZoom(true); } }}
               role="button"
               tabIndex={0}
@@ -229,7 +159,7 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
               )}
               {/* Zoom indicator icon */}
               {puzzle.image_url && (
-                <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm rounded-full p-1.5 text-white/80 pointer-events-none">
+                <div className="absolute bottom-3 right-3 bg-black/50 rounded-full p-1.5 text-white/80 pointer-events-none">
                   <ZoomIn size={20} />
                 </div>
               )}
@@ -278,7 +208,7 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
                 return (
                   <div
                     key={hint.id}
-                    className={`relative ${hintStyle} ${textColor} rounded-xl px-5 py-3.5 transition-all duration-300 border border-white/10 shadow-md${isNewHint ? ' animate-hint-reveal' : ''}`}
+                    className={`relative ${hintStyle} ${textColor} rounded-xl px-5 py-3.5 transition-colors duration-300 border border-white/10 shadow-md${isNewHint ? ' animate-hint-reveal' : ''}`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold font-baloo-2">

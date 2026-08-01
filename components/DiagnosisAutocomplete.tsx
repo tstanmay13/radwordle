@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Send } from 'lucide-react';
 import { Condition } from '@/lib/supabase';
 
 interface DiagnosisAutocompleteProps {
@@ -10,7 +11,33 @@ interface DiagnosisAutocompleteProps {
   previousGuesses?: string[];
   isMobile?: boolean;
   disabled?: boolean;
+  /** When provided, shows the "Guess N / total" label inside the input pill. */
+  current?: number;
+  total?: number;
 }
+
+// Amber Submit gradient — shares the AccentButton token wiring.
+const ACCENT_STYLE = {
+  background: 'linear-gradient(to bottom, var(--color-accent-light), var(--color-accent))',
+  boxShadow: '0 4px 14px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+};
+
+// Input pill — a themed off-white field (cool white that sits in the navy
+// theme). Kept near-opaque with no backdrop-filter: it reads as a clean light
+// bar either way, and dropping the live blur makes the fixed mobile bar much
+// cheaper to scroll past. The border color is driven by the error state.
+const PILL_STYLE = {
+  background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.97), rgba(231, 237, 248, 0.95))',
+  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.7)',
+};
+
+// Dark glass dropdown panel.
+const DROPDOWN_STYLE = {
+  background: 'rgba(17, 27, 52, 0.92)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  border: '1px solid rgba(255, 255, 255, 0.14)',
+};
 
 export default function DiagnosisAutocomplete({
   conditions,
@@ -18,7 +45,9 @@ export default function DiagnosisAutocomplete({
   onDropdownStateChange,
   previousGuesses = [],
   isMobile = false,
-  disabled = false
+  disabled = false,
+  current,
+  total,
 }: DiagnosisAutocompleteProps) {
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -212,10 +241,79 @@ export default function DiagnosisAutocomplete({
     setValidationError(null);
   };
 
+  const showLabel = current != null && total != null;
+
   return (
-    <div ref={containerRef} className="w-full max-w-xl mx-auto relative z-50">
-      <div className="flex gap-2 sm:gap-3">
-        <div className="flex-1 relative">
+    <div ref={containerRef} className="w-full max-w-2xl mx-auto relative z-50">
+      {/* Positioning context: dropdown anchors to the pill only, not the error row */}
+      <div className="relative">
+        {/* Dropdown menu — appears above on mobile, below on desktop */}
+        {isOpen && filteredConditions.length > 0 && (
+          <div
+            className={`absolute left-0 right-0 z-50 overflow-hidden rounded-2xl shadow-2xl ${
+              isMobile ? 'bottom-full mb-2.5' : 'top-full mt-2.5'
+            }`}
+            style={DROPDOWN_STYLE}
+          >
+            <div
+              ref={dropdownRef}
+              className="overflow-y-auto"
+              style={{ maxHeight: isMobile ? 220 : 256 }}
+            >
+              {filteredConditions.map((condition, index) => {
+                const isDisabled = isPreviouslyGuessed(condition.name);
+
+                return (
+                  <button
+                    key={condition.id}
+                    onClick={() => handleSelectOption(condition.name)}
+                    disabled={isDisabled}
+                    className={`w-full text-left font-baloo-2 transition-colors border-b border-white/[0.06] last:border-b-0 ${
+                      isMobile ? 'px-[18px] py-[11px] text-[15px]' : 'px-5 py-3 text-base'
+                    } ${
+                      isDisabled ? 'cursor-not-allowed' : 'hover:bg-white/5'
+                    } ${index === selectedIndex && !isDisabled ? 'bg-white/10' : ''}`}
+                  >
+                    <div className={`font-medium ${isDisabled ? 'text-white/30' : 'text-white/90'}`}>
+                      {condition.name}
+                      {isDisabled && (
+                        <span className="ml-2 text-xs opacity-70">(Previously selected)</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Result count indicator */}
+            {filteredConditions.length === 40 && (
+              <div className="px-4 py-2 text-center text-xs text-white/45 font-baloo-2 border-t border-white/10 bg-black/20">
+                Showing first 40 results. Type more to narrow down.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Glass input pill: label · divider · input · Submit */}
+        <div
+          className={`flex items-center w-full rounded-2xl border ${
+            validationError ? 'border-[rgba(196,115,107,0.85)]' : 'border-[rgba(148,163,190,0.45)]'
+          } ${isMobile ? 'gap-2.5 pl-3.5 pr-[7px] py-[7px]' : 'gap-3.5 pl-[18px] pr-2 py-2'}`}
+          style={PILL_STYLE}
+        >
+          {showLabel && (
+            <>
+              <p className="font-mono uppercase select-none flex-shrink-0 font-semibold tracking-[0.12em] text-slate-500 text-[11px] sm:text-xs">
+                Guess {current} / {total}
+              </p>
+              <span
+                className="flex-shrink-0 w-px bg-slate-400/40"
+                style={{ height: isMobile ? 22 : 26 }}
+                aria-hidden="true"
+              />
+            </>
+          )}
+
           <input
             ref={inputRef}
             type="text"
@@ -223,77 +321,27 @@ export default function DiagnosisAutocomplete({
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             disabled={disabled}
-            placeholder={disabled ? "Accept notice to play" : "Diagnosis..."}
+            placeholder={disabled ? 'Accept notice to play' : 'Diagnosis...'}
             aria-invalid={!!validationError}
-            aria-describedby={validationError ? "diagnosis-error" : undefined}
-            className={`w-full px-3 sm:px-6 py-3 sm:py-4 rounded-lg text-base sm:text-lg font-baloo-2 bg-white bg-opacity-90 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 ${
-              validationError
-                ? 'ring-2 ring-red-500 focus:ring-red-500'
-                : 'focus:ring-yellow-400'
+            aria-describedby={validationError ? 'diagnosis-error' : undefined}
+            className={`flex-1 min-w-0 bg-transparent outline-none font-baloo-2 font-medium text-slate-800 placeholder-slate-400 ${
+              isMobile ? 'text-base' : 'text-lg'
             }`}
             autoComplete="off"
           />
 
-          {/* Dropdown menu - appears above on mobile, below on desktop */}
-          {isOpen && filteredConditions.length > 0 && (
-            <div
-              className={`absolute left-0 right-0 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 overflow-hidden ${
-                isMobile ? 'bottom-full mb-2' : 'top-full mt-2'
-              }`}
-            >
-              <div
-                ref={dropdownRef}
-                className="overflow-y-auto"
-                style={{ maxHeight: '180px' }}
-              >
-                {filteredConditions.map((condition, index) => {
-                  const isDisabled = isPreviouslyGuessed(condition.name);
-
-                  return (
-                    <button
-                      key={condition.id}
-                      onClick={() => handleSelectOption(condition.name)}
-                      disabled={isDisabled}
-                      className={`w-full text-left px-6 py-3 transition-colors border-b border-gray-100 last:border-b-0 ${
-                        isDisabled
-                          ? 'cursor-not-allowed bg-gray-50'
-                          : 'hover:bg-blue-50'
-                      } ${
-                        index === selectedIndex && !isDisabled ? 'bg-blue-100' : ''
-                      }`}
-                    >
-                      <div className={`font-medium ${isDisabled ? 'text-gray-400' : 'text-gray-800'}`}>
-                        {condition.name}
-                        {isDisabled && (
-                          <span className="ml-2 text-xs">(Previously selected)</span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Result count indicator */}
-              {filteredConditions.length === 40 && (
-                <div className="px-6 py-2 bg-gray-50 text-xs text-gray-500 text-center border-t border-gray-200">
-                  Showing first 40 results. Type more to narrow down.
-                </div>
-              )}
-            </div>
-          )}
+          <button
+            onClick={handleSubmit}
+            disabled={disabled}
+            className={`flex items-center gap-2 font-baloo-2 font-bold flex-shrink-0 rounded-xl transition-transform active:scale-95 ${
+              isMobile ? 'px-4 py-[9px] text-[15px]' : 'px-[22px] py-[11px] text-[17px]'
+            } ${disabled ? 'bg-gray-500 text-gray-300 cursor-not-allowed' : 'text-black'}`}
+            style={disabled ? undefined : ACCENT_STYLE}
+          >
+            Submit
+            <Send size={isMobile ? 16 : 18} />
+          </button>
         </div>
-
-        <button
-          onClick={handleSubmit}
-          disabled={disabled}
-          className={`px-4 sm:px-8 py-3 sm:py-4 font-bold font-baloo-2 text-base sm:text-lg rounded-lg transition-all shadow-lg ${
-            disabled
-              ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
-              : 'bg-gradient-to-r from-accent to-accent-light hover:from-accent hover:to-accent text-black'
-          }`}
-        >
-          Submit
-        </button>
       </div>
 
       {/* Validation error message */}
@@ -301,7 +349,7 @@ export default function DiagnosisAutocomplete({
         <div
           id="diagnosis-error"
           role="alert"
-          className="mt-2 px-3 py-2 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm font-medium flex items-center gap-2"
+          className="mt-2 px-3 py-2 rounded-lg text-[13px] font-baloo-2 flex items-center gap-2 text-[#ffd9d4] border border-[rgba(196,115,107,0.45)] bg-[rgba(196,115,107,0.18)]"
         >
           <svg
             className="w-4 h-4 flex-shrink-0"

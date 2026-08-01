@@ -5,33 +5,34 @@ import { CSSProperties } from 'react';
 /**
  * Ambient page background — the "Classic" annotated DICOM/PACS treatment from
  * the redesign prototype (radiordle-core.jsx `PageBackground`, `bg='annotated'`).
- * Soft aurora glows sit behind a subtle PACS overlay (corner metadata, R/L
- * orientation markers, couch curve, scale ruler), finished with film grain +
+ * A subtle PACS overlay (side rails by the R / L markers, corner metadata,
+ * couch curve, scale ruler) over a dark radial base, finished with film grain +
  * a center-focusing vignette.
  *
  * Purely decorative: pointer-events-none, aria-hidden. The whole thing renders
- * as a single static paint — the prototype's animated blur blobs were replaced
- * with static radial-gradient glows (no blur filters, no animation, no promoted
- * layers) so the background stays cheap and never re-rasterizes.
- * Sizing/position values that differed between the prototype's desktop and
- * mobile frames are expressed here as responsive Tailwind classes.
+ * as a single static paint — no blur filters, no animation, no promoted layers —
+ * so the background stays cheap and never re-rasterizes. Sizing/position values
+ * that differed between the prototype's desktop and mobile frames are expressed
+ * here as responsive Tailwind classes.
  */
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 const RADBG =
-  'radial-gradient(120% 100% at 50% 34%, #0a1428 0%, #060b1a 62%, #03060f 100%)';
-const TICK = 'rgba(160,195,255,0.20)';
+  'radial-gradient(120% 100% at 50% 34%, #0f1c3a 0%, #0a1226 60%, #070c18 100%)';
 
-// Ambient aurora glows, baked into the background paint. These reproduce the
-// prototype's two heavily-blurred color blobs (blue top, teal lower-right) as
-// static radial gradients — same soft light field, but with no blur filter,
-// no animation, and no extra compositing layers, so the whole background
-// paints once and stays cheap. (Positions/alphas track the original blobs:
-// blue rgba(56,130,230) centered ~56%/30%, teal rgba(45,212,191) ~85%/73%.)
-const AURORA_A =
-  'radial-gradient(46% 42% at 56% 30%, rgba(56,130,230,0.20) 0%, rgba(56,130,230,0) 72%)';
-const AURORA_B =
-  'radial-gradient(42% 40% at 85% 73%, rgba(45,212,191,0.10) 0%, rgba(45,212,191,0) 72%)';
+// --- DICOM/PACS overlay brightness ---------------------------------------
+// Single knob for how strongly the annotation lines & text read against the
+// dark background (the vignette darkens the corners where most of them sit, so
+// they need a little lift). 1.0 = original prototype (dim). Presets to try:
+//   1.6 = medium · 2.1 = bright · 2.7 = brightest
+const DICOM_INTENSITY = 1.6;
+
+const lift = (alpha: number) => Math.min(alpha * DICOM_INTENSITY, 1);
+const META_COLOR = `rgba(170, 200, 255, ${lift(0.17)})`;
+const ORIENT_COLOR = `rgba(170, 200, 255, ${lift(0.22)})`;
+const RAIL_COLOR = `rgba(150, 185, 255, ${lift(0.1)})`;
+const CURVE_COLOR = `rgba(160, 195, 255, ${lift(0.22)})`;
+const TICK = `rgba(160, 195, 255, ${lift(0.2)})`;
 
 // Fine film grain — the detail that separates premium dark UIs from flat ones.
 function Grain({ opacity = 0.05 }: { opacity?: number }) {
@@ -52,7 +53,7 @@ function Grain({ opacity = 0.05 }: { opacity?: number }) {
 }
 
 // Center-focusing vignette so content stays legible over any texture.
-function Vignette({ strength = 0.66 }: { strength?: number }) {
+function Vignette({ strength = 0.5 }: { strength?: number }) {
   return (
     <div
       className="absolute inset-0"
@@ -70,7 +71,7 @@ export default function PageBackground() {
     fontFamily: MONO,
     lineHeight: 1.7,
     letterSpacing: '0.04em',
-    color: 'rgba(170,200,255,0.17)',
+    color: META_COLOR,
     whiteSpace: 'pre',
   };
   const orient: CSSProperties = {
@@ -78,7 +79,7 @@ export default function PageBackground() {
     fontSize: 15,
     fontWeight: 700,
     letterSpacing: '0.1em',
-    color: 'rgba(170,200,255,0.22)',
+    color: ORIENT_COLOR,
   };
   const ruler = Array.from({ length: 31 });
 
@@ -86,21 +87,21 @@ export default function PageBackground() {
     <div
       aria-hidden="true"
       className="absolute sm:fixed inset-0 overflow-hidden pointer-events-none"
-      style={{ background: `${AURORA_A}, ${AURORA_B}, ${RADBG}` }}
+      style={{ background: RADBG }}
     >
-      {/* Framing rule */}
-      <div
-        className="absolute"
-        style={{ inset: '5%', border: '1px solid rgba(150,185,255,0.10)', borderRadius: 3 }}
-      />
+      {/* Side rails flanking the R / L orientation markers */}
+      <div className="absolute top-[6%] bottom-[6%] w-px" style={{ left: '5%', background: RAIL_COLOR }} />
+      <div className="absolute top-[6%] bottom-[6%] w-px" style={{ right: '5%', background: RAIL_COLOR }} />
 
-      {/* Corner metadata — authentic PACS/DICOM fields */}
-      <div className="absolute text-[8.5px] sm:text-[11px]" style={{ top: '7%', left: '6%', ...meta }}>
+      {/* Corner metadata — authentic PACS/DICOM fields.
+          Top blocks use a fixed px offset so they always clear the glass navbar
+          (56px mobile / 84px desktop) instead of tucking under it. */}
+      <div className="absolute text-[8.5px] sm:text-[11px] top-[68px] sm:top-[96px]" style={{ left: '6%', ...meta }}>
         {'Im: 24/512\nSe: 3\nJPEG Lossy 20:1'}
       </div>
       <div
-        className="absolute text-[8.5px] sm:text-[11px] text-right"
-        style={{ top: '7%', right: '6%', ...meta }}
+        className="absolute text-[8.5px] sm:text-[11px] text-right top-[68px] sm:top-[96px]"
+        style={{ right: '6%', ...meta }}
       >
         {'Study ID: 100482\nCT ABDOMEN W/CONTRAST\nAXIAL 2.0MM SOFT TISSUE\nFlip H'}
       </div>
@@ -132,7 +133,7 @@ export default function PageBackground() {
         <path
           d="M0 44 Q400 6 800 44"
           fill="none"
-          stroke="rgba(160,195,255,0.22)"
+          stroke={CURVE_COLOR}
           strokeWidth="1.2"
           vectorEffect="non-scaling-stroke"
         />
@@ -157,7 +158,7 @@ export default function PageBackground() {
       ))}
 
       <Grain opacity={0.05} />
-      <Vignette strength={0.66} />
+      <Vignette strength={0.5} />
     </div>
   );
 }
