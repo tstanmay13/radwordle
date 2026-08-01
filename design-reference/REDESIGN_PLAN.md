@@ -78,11 +78,11 @@ main  (live / Vercel)  ───────────────────
 - [x] **08 · Toasts** — correct/partial/incorrect/copied toast styling + timing.
 
 ### Modals
-- [ ] **09 · Results modal** — biggest one: header w/ result tiles + gradient answer, collapsible
+- [x] **09 · Results modal** — biggest one: header w/ result tiles + gradient answer, collapsible
   "About this condition", stat row, guess distribution, "How You Compare", Share/Copy/Learn More.
-- [ ] **10 · Stats modal** — stat cards (played/win%/streak/max) + distribution.
-- [ ] **11 · Feedback modal** — category select + message + validation + success state.
-- [ ] **12 · Zoom modal** — scroll-to-zoom / drag-to-pan overlay.
+- [x] **10 · Stats modal** — stat cards (played/win%/streak/max) + distribution.
+- [x] **11 · Feedback modal** — category select + message + validation + success state.
+- [x] **12 · Zoom modal** — scroll-to-zoom / drag-to-pan overlay.
 
 ### Secondary screens
 - [ ] **13 · About page** — glass cards, How to Play, team, disclaimer.
