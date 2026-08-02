@@ -113,12 +113,10 @@ export default function TopBar({ onStats, onFeedback }: TopBarProps) {
               <Link
                 href="/install"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 w-full px-4 py-3 text-left text-white font-baloo-2 font-semibold
+                className="flex items-center gap-3 w-full px-4 py-3 text-left text-accent-light font-baloo-2 font-bold
                            border-b border-white/10 transition-colors hover:bg-white/10"
               >
-                <span className="text-white/80">
-                  <Download size={18} />
-                </span>
+                <Download size={18} />
                 Install
               </Link>
               <Link

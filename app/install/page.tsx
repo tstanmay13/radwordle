@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import PageBackground from '@/components/PageBackground';
+import PlainBackground from '@/components/PlainBackground';
 import InstallScreen from '@/components/InstallScreen';
 
 export const metadata: Metadata = {
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 export default function InstallPage() {
   return (
     <div className="min-h-screen-safe relative overflow-y-auto overflow-x-hidden" style={{ minHeight: 'var(--full-vh)' }}>
-      {/* Animated DICOM/PACS background (shared across screens) */}
-      <PageBackground />
+      {/* Plain dark base */}
+      <PlainBackground />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen-safe flex flex-col mx-auto w-full max-w-lg" style={{ minHeight: 'var(--full-vh)' }}>

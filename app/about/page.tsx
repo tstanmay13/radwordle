@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import PageBackground from '@/components/PageBackground';
+import PlainBackground from '@/components/PlainBackground';
+import AboutFeedbackButton from '@/components/AboutFeedbackButton';
 import LegalModals from '@/components/LegalModals';
 
 export const metadata: Metadata = {
@@ -16,8 +17,10 @@ export const metadata: Metadata = {
  * blur + hairline border — reads as glass while staying cheap.
  */
 function AboutCard({ title, children }: { title: string; children: ReactNode }) {
+  // Flat translucent fill (no backdrop-blur) so the long, scrolling About page
+  // stays smooth — the glow background behind it is dark enough to read as glass.
   return (
-    <section className="rounded-2xl p-6 sm:p-7 bg-white/[0.07] backdrop-blur-sm border border-white/10">
+    <section className="rounded-2xl p-6 sm:p-7 bg-white/[0.06] border border-white/10">
       <h2 className="text-2xl text-white font-baloo-2 font-bold mb-4">{title}</h2>
       <div className="space-y-3 text-white/85 leading-relaxed">{children}</div>
     </section>
@@ -49,8 +52,8 @@ const TEAM = [
 export default function AboutPage() {
   return (
     <div className="min-h-screen-safe relative overflow-y-auto overflow-x-hidden" style={{ minHeight: 'var(--full-vh)' }}>
-      {/* Animated DICOM/PACS background (shared across screens) */}
-      <PageBackground />
+      {/* Plain dark base */}
+      <PlainBackground />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen-safe flex flex-col" style={{ minHeight: 'var(--full-vh)' }}>
@@ -80,11 +83,8 @@ export default function AboutPage() {
         <div className="flex-1 flex flex-col items-center px-4 py-6 sm:py-8">
           <div className="w-full max-w-2xl space-y-5">
             <AboutCard title="About Radiordle">
-              <p className="text-lg">
-                Radiordle is a daily radiology puzzle game inspired by Wordle. Each day, players are presented with a medical imaging case and must guess the correct diagnosis.
-              </p>
               <p>
-                The game is designed to be both educational and entertaining, helping medical students, radiology residents, and healthcare professionals sharpen their diagnostic skills in a fun, gamified format.
+                Radiordle is a daily radiology puzzle game inspired by Wordle. Each day, players are presented with a medical imaging case and must guess the correct diagnosis.
               </p>
               <p>
                 New puzzles are released daily at midnight EST, featuring a variety of imaging modalities including X-rays, CT scans, MRIs, and ultrasounds.
@@ -102,19 +102,6 @@ export default function AboutPage() {
               </ol>
             </AboutCard>
 
-            <AboutCard title="Educational Purpose">
-              <p>Radiordle serves as a supplementary educational tool for:</p>
-              <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Medical students learning radiology fundamentals</li>
-                <li>Radiology residents preparing for board exams</li>
-                <li>Healthcare professionals maintaining diagnostic skills</li>
-                <li>Anyone interested in medical imaging education</li>
-              </ul>
-              <p className="text-sm text-white/60 italic">
-                Note: Radiordle is designed for entertainment and educational purposes only. It does not provide medical advice and should not be used for clinical decision-making. Always consult a qualified healthcare professional for medical concerns.
-              </p>
-            </AboutCard>
-
             <AboutCard title="Meet the Team">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {TEAM.map((member) => (
@@ -128,7 +115,7 @@ export default function AboutPage() {
                       </svg>
                     </div>
                     <h3 className="font-baloo-2 font-extrabold text-white leading-tight text-lg">{member.role}</h3>
-                    <p className="font-baloo-2 font-semibold mb-2.5 text-accent-light text-sm">{member.job}</p>
+                    <p className="font-semibold mb-2.5 text-accent-light text-sm">{member.job}</p>
                     <p className="text-white/70 text-sm leading-relaxed">{member.bio}</p>
                   </div>
                 ))}
@@ -149,15 +136,7 @@ export default function AboutPage() {
                   </svg>
                   GitHub Repository
                 </a>
-                <Link
-                  href="/"
-                  className="flex items-center justify-center gap-2 px-6 py-3 text-white rounded-xl font-bold bg-white/10 hover:bg-white/[0.16] transition-colors"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                  </svg>
-                  Send Feedback
-                </Link>
+                <AboutFeedbackButton />
               </div>
             </AboutCard>
 

@@ -20,6 +20,13 @@ const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 const RADBG =
   'radial-gradient(120% 100% at 50% 34%, #0f1c3a 0%, #0a1226 60%, #070c18 100%)';
 
+// Teal glow as a full-height vertical column down the middle of the screen: an
+// even, uniform shade across the middle that fans out only at the left/right
+// ends (a flat "plateau" rather than a single bright center line), composited
+// over the base behind the PACS annotations. Static — no blur, no animation.
+const TEAL_GLOW =
+  'linear-gradient(90deg, transparent 8%, rgba(90,157,134,0.085) 42%, rgba(90,157,134,0.085) 58%, transparent 92%)';
+
 // --- DICOM/PACS overlay brightness ---------------------------------------
 // Single knob for how strongly the annotation lines & text read against the
 // dark background (the vignette darkens the corners where most of them sit, so
@@ -87,7 +94,7 @@ export default function PageBackground() {
     <div
       aria-hidden="true"
       className="absolute sm:fixed inset-0 overflow-hidden pointer-events-none"
-      style={{ background: RADBG }}
+      style={{ background: `${TEAL_GLOW}, ${RADBG}` }}
     >
       {/* Side rails flanking the R / L orientation markers */}
       <div className="absolute top-[6%] bottom-[6%] w-px" style={{ left: '5%', background: RAIL_COLOR }} />
@@ -112,7 +119,7 @@ export default function PageBackground() {
         className="absolute text-[8.5px] sm:text-[11px] text-right"
         style={{ bottom: '24%', right: '6%', ...meta }}
       >
-        {'1.5T\nTR: 500  TE: 14\n2024-03-12  14:22:05'}
+        {'kVp: 120\nmA: 200\n2024-03-12  14:22:05'}
       </div>
 
       {/* R / L orientation markers */}

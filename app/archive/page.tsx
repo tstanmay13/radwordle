@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import PageBackground from '@/components/PageBackground';
+import PlainBackground from '@/components/PlainBackground';
 import ArchiveBrowser from '@/components/ArchiveBrowser';
 
 export default function ArchivePage() {
   return (
     <div className="min-h-screen-safe relative overflow-y-auto overflow-x-hidden" style={{ minHeight: 'var(--full-vh)' }}>
-      {/* Animated DICOM/PACS background (shared across screens) */}
-      <PageBackground />
+      {/* Plain dark base */}
+      <PlainBackground />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen-safe flex flex-col" style={{ minHeight: 'var(--full-vh)' }}>

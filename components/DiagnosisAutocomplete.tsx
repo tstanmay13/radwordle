@@ -303,7 +303,7 @@ export default function DiagnosisAutocomplete({
         >
           {showLabel && (
             <>
-              <p className="font-mono uppercase select-none flex-shrink-0 font-semibold tracking-[0.12em] text-slate-500 text-[11px] sm:text-xs">
+              <p className="font-baloo-2 uppercase select-none flex-shrink-0 font-bold tracking-[0.1em] text-slate-500 text-[11px] sm:text-xs">
                 Guess {current} / {total}
               </p>
               <span

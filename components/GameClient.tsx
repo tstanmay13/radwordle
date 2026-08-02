@@ -39,6 +39,8 @@ interface GameClientProps {
   correctAnswer: string;
   citation?: string | null;
   learnLink?: string | null;
+  /** Optional "About this condition" blurb for the results modal. */
+  description?: string | null;
   isArchive: boolean;
   onGameStateChange: (state: GameState) => void;
   onTypingStateChange?: (isTyping: boolean) => void;
@@ -79,6 +81,7 @@ export default function GameClient({
   correctAnswer,
   citation,
   learnLink,
+  description,
   isArchive,
   onGameStateChange,
   onTypingStateChange,
@@ -308,16 +311,16 @@ export default function GameClient({
       {/* Desktop layout - normal flow */}
       <div className="hidden sm:block w-full pb-[220px]">
         {gameState.isComplete ? (
-          <div className="text-center text-white text-xl font-baloo-2">
+          <div className="text-center text-white text-xl font-baloo-2 font-bold">
             {gameState.isWon ? (
               <>
                 <p>Congratulations! The answer was:</p>
-                <p className="text-2xl mt-1">{correctAnswer}</p>
+                <p className="text-2xl mt-1 text-accent">{correctAnswer}</p>
               </>
             ) : (
               <>
                 <p>Game Over. The answer was:</p>
-                <p className="text-2xl mt-1">{correctAnswer}</p>
+                <p className="text-2xl mt-1 text-accent">{correctAnswer}</p>
               </>
             )}
             <button
@@ -343,16 +346,16 @@ export default function GameClient({
       {/* Mobile layout - input in natural flow */}
       <div className="sm:hidden w-full">
         {gameState.isComplete ? (
-          <div className="text-center text-white text-xl font-baloo-2">
+          <div className="text-center text-white text-xl font-baloo-2 font-bold">
             {gameState.isWon ? (
               <>
                 <p>Congratulations! The answer was:</p>
-                <p className="text-2xl mt-1">{correctAnswer}</p>
+                <p className="text-2xl mt-1 text-accent">{correctAnswer}</p>
               </>
             ) : (
               <>
                 <p>Game Over. The answer was:</p>
-                <p className="text-2xl mt-1">{correctAnswer}</p>
+                <p className="text-2xl mt-1 text-accent">{correctAnswer}</p>
               </>
             )}
             <button
@@ -392,6 +395,7 @@ export default function GameClient({
           correctAnswer={correctAnswer}
           citation={citation}
           learnLink={learnLink}
+          description={description}
           dayNumber={dayNumber}
           puzzleNumber={puzzleNumber}
           isArchive={isArchive}

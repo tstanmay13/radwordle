@@ -33,6 +33,8 @@ export interface Puzzle {
   citation?: string | null;
   learn_link?: string | null;
   annotated_image_url?: string | null;
+  /** Plain-language blurb shown in the results modal's "About this condition". */
+  description?: string | null;
   created_at?: string;
 }
 

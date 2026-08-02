@@ -8,9 +8,13 @@ import Link from 'next/link';
  * Install (PWA) instructions screen (design foundation: radiordle-install.jsx).
  *
  * A mobile-first "Add to Home Screen" walkthrough with a Safari / Chrome tab
- * switcher and three illustrated step cards per browser. The browser chrome,
- * menus and pointer arrows are static mock illustrations (inline-styled to stay
- * pixel-precise); nothing here animates continuously.
+ * switcher and three illustrated step cards per browser. The steps use real
+ * (cropped) device screenshots with red pointer arrows drawn in code over the
+ * relevant control. Nothing here animates continuously.
+ *
+ * NOTE: the screenshots were captured against a local dev address
+ * (192.168.1.98:3000). Re-capture them on https://radiordle.org before this
+ * ships so users don't see a dev URL / "Not Secure" warning.
  */
 
 type Browser = 'safari' | 'chrome';
@@ -18,12 +22,27 @@ type Browser = 'safari' | 'chrome';
 const AMBER_GRADIENT = 'linear-gradient(to bottom, #fbbf24, #f59e0b)';
 
 /* ---- Red hand-drawn pointer arrow ---- */
-function RedArrow({ style, flip = false, width = 70 }: { style?: CSSProperties; flip?: boolean; width?: number }) {
+function RedArrow({
+  style,
+  flip = false,
+  rotate = 0,
+  width = 80,
+}: {
+  style?: CSSProperties;
+  flip?: boolean;
+  rotate?: number;
+  width?: number;
+}) {
   return (
     <svg
       viewBox="0 0 100 60"
       width={width}
-      style={{ position: 'absolute', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))', transform: flip ? 'scaleX(-1)' : undefined, ...style }}
+      style={{
+        position: 'absolute',
+        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.55))',
+        transform: `rotate(${rotate}deg)${flip ? ' scaleX(-1)' : ''}`,
+        ...style,
+      }}
     >
       <defs>
         <marker id="rh" markerWidth="7" markerHeight="7" refX="4" refY="3.5" orient="auto">
@@ -35,114 +54,18 @@ function RedArrow({ style, flip = false, width = 70 }: { style?: CSSProperties; 
   );
 }
 
-/* ---- Mock UI pieces ---- */
-function MockStatusBar() {
-  return (
-    <div className="flex items-center justify-between px-3.5 text-white h-[26px] text-[11px] font-semibold">
-      <span className="flex items-center gap-1">
-        10:32
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M3 11l18-8-8 18-2-8-8-2z" /></svg>
-      </span>
-      <div className="flex items-center gap-1.5">
-        <svg width="16" height="11" viewBox="0 0 24 16" fill="#fff"><rect x="0" y="10" width="3" height="6" rx="1" /><rect x="5" y="7" width="3" height="9" rx="1" /><rect x="10" y="4" width="3" height="12" rx="1" /><rect x="15" y="1" width="3" height="15" rx="1" opacity="0.4" /></svg>
-        <svg width="15" height="11" viewBox="0 0 24 18" fill="#fff"><path d="M12 3C7 3 3 6 1 9l11 9 11-9c-2-3-6-6-11-6z" opacity="0.95" /></svg>
-        <span className="inline-block w-5 h-[11px] border border-white rounded-[3px] relative mr-0.5">
-          <span className="absolute inset-[1px] w-[70%] bg-[#37d67a] rounded-[1px]" />
-        </span>
-      </div>
-    </div>
-  );
+/* ---- A cropped device screenshot with an optional pointer arrow overlay ---- */
+interface Arrow {
+  style: CSSProperties;
+  flip?: boolean;
+  rotate?: number;
+  width?: number;
 }
-
-function MockShareIcon({ highlight }: { highlight?: boolean }) {
+function Shot({ src, w, h, arrow }: { src: string; w: number; h: number; arrow?: Arrow }) {
   return (
-    <span
-      className="flex items-center justify-center rounded-md w-[30px] h-[30px]"
-      style={{ background: highlight ? 'rgba(245,158,11,0.25)' : 'transparent', outline: highlight ? '2px solid #f59e0b' : 'none' }}
-    >
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#cfd8e6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4" /><path d="m8 8 4-4 4 4" /><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7" /></svg>
-    </span>
-  );
-}
-
-function MockBrowser({ browser, highlightShare, highlightMenu }: { browser: Browser; highlightShare?: boolean; highlightMenu?: boolean }) {
-  return (
-    <div className="overflow-hidden rounded-t-xl bg-[#0c1733]">
-      <MockStatusBar />
-      {/* address bar */}
-      <div className="flex items-center gap-2 mx-3 mb-2 px-3 rounded-lg h-[34px] bg-white/10">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-        <span className="flex-1 text-center text-white/70 text-[12px]">radiordle.org</span>
-        {browser === 'safari' ? (
-          <MockShareIcon highlight={highlightShare} />
-        ) : (
-          <span
-            className="flex items-center justify-center rounded-md w-7 h-7"
-            style={{ background: highlightMenu ? 'rgba(245,158,11,0.25)' : 'transparent', outline: highlightMenu ? '2px solid #f59e0b' : 'none' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)"><circle cx="12" cy="5" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="12" cy="19" r="1.6" /></svg>
-          </span>
-        )}
-      </div>
-      {/* radiordle mini top bar */}
-      <div className="flex items-center justify-between px-3 h-10 bg-white/[0.05] border-t border-white/[0.08]">
-        <div className="flex items-center gap-1">
-          <Image src="/radle_icon.svg" alt="" width={20} height={20} className="object-contain" />
-          <span className="font-baloo-2 font-extrabold text-white text-[13px]">Radiordle</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="flex items-center gap-1 rounded-md text-white/80 text-[10px] px-[7px] py-1 bg-white/[0.12]">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12" /><path d="m7 12 5 5 5-5" /><path d="M5 21h14" /></svg>
-            Install
-          </span>
-          <span className="flex items-center justify-center rounded-md w-[22px] h-[22px]" style={{ background: AMBER_GRADIENT }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.4" strokeLinecap="round"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
-          </span>
-        </div>
-      </div>
-      <div className="h-9 bg-[#0c1733]" />
-    </div>
-  );
-}
-
-type MenuRow = [string, string, boolean?];
-
-function MenuIcon({ k }: { k: string }) {
-  const c = { stroke: 'rgba(255,255,255,0.65)', strokeWidth: 1.8, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  if (k === 'plus') return <svg width="18" height="18" viewBox="0 0 24 24" {...c} stroke="#fff"><rect x="3" y="3" width="18" height="18" rx="3" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>;
-  if (k === 'desktop') return <svg width="18" height="18" viewBox="0 0 24 24" {...c}><rect x="2" y="4" width="20" height="13" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /></svg>;
-  if (k === 'doc') return <svg width="18" height="18" viewBox="0 0 24 24" {...c}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>;
-  return <svg width="18" height="18" viewBox="0 0 24 24" {...c}><circle cx="12" cy="12" r="9" /></svg>;
-}
-
-function MockMenu({ browser }: { browser: Browser }) {
-  const rows: MenuRow[] = browser === 'safari'
-    ? [['Find on Page', 'doc'], ['Request Desktop Site', 'desktop'], ['Add to Home Screen', 'plus', true], ['Add to Reading List', 'glasses'], ['Open in Chrome', 'chrome']]
-    : [['Downloads', 'down'], ['Bookmarks', 'star'], ['Recent tabs', 'clock'], ['Add to Home screen', 'plus', true], ['Settings', 'gear']];
-  return (
-    <div className="rounded-xl overflow-hidden bg-[#1d2433] border border-white/[0.08]">
-      {rows.map(([label, k, hl], i) => (
-        <div
-          key={i}
-          className="relative flex items-center justify-between px-4 h-11"
-          style={{ background: hl ? 'rgba(255,255,255,0.08)' : 'transparent', borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
-        >
-          <span className="text-white text-sm" style={{ fontWeight: hl ? 700 : 400 }}>{label}</span>
-          <MenuIcon k={k} />
-          {hl && <RedArrow width={64} style={{ right: 44, top: -4 }} flip />}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function MockHomeIcon() {
-  return (
-    <div className="flex flex-col items-center justify-center py-5" style={{ background: 'linear-gradient(160deg,#4a5578,#2d3550)' }}>
-      <div className="flex items-center justify-center w-[70px] h-[70px] rounded-[17px] bg-[#0c1733] border border-white/10 shadow-[0_8px_20px_rgba(0,0,0,0.45)]">
-        <Image src="/radle_icon.svg" alt="" width={46} height={46} className="object-contain" />
-      </div>
-      <span className="text-white mt-2 text-[12px] [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">Radiordle</span>
+    <div className="relative bg-black">
+      <Image src={src} alt="" width={w} height={h} className="block w-full h-auto" />
+      {arrow && <RedArrow style={arrow.style} flip={arrow.flip} rotate={arrow.rotate} width={arrow.width} />}
     </div>
   );
 }
@@ -170,13 +93,15 @@ function SafariSteps() {
   return (
     <>
       <StepCard n="1" title="Tap the Share icon">
-        <div className="relative"><MockBrowser browser="safari" highlightShare /><RedArrow width={78} style={{ right: 36, top: 30 }} /></div>
+        <Shot src="/install/safari-1-share.webp" w={593} h={710}
+          arrow={{ style: { top: '1%', right: '46%' }, flip: true, width: 74 }} />
       </StepCard>
       <StepCard n="2" title="Tap “Add to Home Screen”">
-        <div className="p-3 bg-[#11182b]"><MockMenu browser="safari" /></div>
+        <Shot src="/install/safari-2-add.webp" w={850} h={620}
+          arrow={{ style: { top: '66%', right: '40%' }, flip: true, width: 82 }} />
       </StepCard>
-      <StepCard n="3" title="Tap the icon to launch">
-        <MockHomeIcon />
+      <StepCard n="3" title="Tap “Add”">
+        <Shot src="/install/safari-3-confirm.webp" w={920} h={720} />
       </StepCard>
     </>
   );
@@ -185,14 +110,12 @@ function SafariSteps() {
 function ChromeSteps() {
   return (
     <>
-      <StepCard n="1" title="Tap the menu (⋮)">
-        <div className="relative"><MockBrowser browser="chrome" highlightMenu /><RedArrow width={70} style={{ right: 38, top: 30 }} /></div>
+      <StepCard n="1" title="Tap Share, then “Add to Home Screen”">
+        <Shot src="/install/chrome-2-add.webp" w={850} h={535}
+          arrow={{ style: { top: '20%', right: '40%' }, flip: true, width: 82 }} />
       </StepCard>
-      <StepCard n="2" title="Tap “Add to Home screen”">
-        <div className="p-3 bg-[#11182b]"><MockMenu browser="chrome" /></div>
-      </StepCard>
-      <StepCard n="3" title="Tap the icon to launch">
-        <MockHomeIcon />
+      <StepCard n="2" title="Tap “Add”">
+        <Shot src="/install/chrome-3-confirm.webp" w={920} h={720} />
       </StepCard>
     </>
   );
