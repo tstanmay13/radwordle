@@ -33,8 +33,9 @@ export interface Puzzle {
   citation?: string | null;
   learn_link?: string | null;
   annotated_image_url?: string | null;
-  /** Plain-language blurb shown in the results modal's "About this condition". */
-  description?: string | null;
+  /** Plain-language blurb shown in the results modal's "About this condition".
+   *  Populated from the `condition_description` column; null hides the section. */
+  condition_description?: string | null;
   created_at?: string;
 }
 

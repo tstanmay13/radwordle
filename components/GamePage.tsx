@@ -232,7 +232,7 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
             correctAnswer={puzzle.answer}
             citation={puzzle.citation}
             learnLink={puzzle.learn_link}
-            description={puzzle.description}
+            description={puzzle.condition_description}
             isArchive={isArchive}
             onGameStateChange={handleGameStateChange}
           />
