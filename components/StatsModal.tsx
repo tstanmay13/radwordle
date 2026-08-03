@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Statistics } from '@/lib/localStorage';
-import { MAX_GUESSES } from '@/lib/gameLogic';
 import { getGlobalStats, calculatePercentileBeat, GlobalStats } from '@/lib/supabase';
+import ModalShell from './ui/ModalShell';
+import StatRow from './ui/StatRow';
+import GuessDistribution from './ui/GuessDistribution';
 
 interface StatsModalProps {
   isOpen: boolean;
@@ -14,14 +16,6 @@ interface StatsModalProps {
 export default function StatsModal({ isOpen, onClose, stats }: StatsModalProps) {
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [percentileBeat, setPercentileBeat] = useState<number | null>(null);
-
-  // Lock background scroll while modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
-    }
-  }, [isOpen]);
 
   // Fetch global stats when modal opens
   useEffect(() => {
@@ -45,12 +39,6 @@ export default function StatsModal({ isOpen, onClose, stats }: StatsModalProps) 
     ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
     : 0;
 
-  // Find the max value in guess distribution for scaling bars
-  const maxDistribution = Math.max(
-    ...Object.values(stats.guessDistribution),
-    1 // Prevent division by zero
-  );
-
   // Calculate user's average guesses (only counting wins)
   const userAvgGuesses = (() => {
     let totalGuesses = 0;
@@ -68,117 +56,77 @@ export default function StatsModal({ isOpen, onClose, stats }: StatsModalProps) 
     : 0;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50  flex items-center justify-center z-[100] p-4 animate-backdrop-fade"
-      onClick={onClose}
-    >
-      <div
-        className="bg-gradient-to-b from-modal-bg to-page-bg-dark rounded-lg p-4 sm:p-8 max-w-md w-full shadow-2xl max-h-[90vh] sm:max-h-none overflow-y-auto font-baloo-2 animate-modal-enter"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Title */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-6">
-          Your Statistics
-        </h2>
+    <ModalShell onClose={onClose} maxWidthClass="max-w-[460px]" ariaLabel="Your statistics">
+      <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-5">
+        Your Statistics
+      </h2>
 
-        {/* Statistics */}
-        <div className="bg-white rounded-lg p-3 sm:p-4 mb-4">
-          <h3 className="text-xl sm:text-2xl font-bold text-black text-center mb-2">Statistics</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-success leading-tight">{stats.gamesPlayed}</p>
-              <p className="text-xs text-gray-600">Played</p>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-success leading-tight">{winRate}</p>
-              <p className="text-xs text-gray-600">Win %</p>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-success leading-tight">{stats.currentStreak}</p>
-              <p className="text-xs text-gray-600">Current Streak</p>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-success leading-tight">{stats.maxStreak}</p>
-              <p className="text-xs text-gray-600">Max Streak</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Guess Distribution */}
-        <div className="bg-white rounded-lg p-4 sm:p-6 mb-6">
-          <h3 className="text-lg sm:text-xl font-bold text-black text-center mb-4">
-            Guess Distribution
-          </h3>
-          <div className="space-y-2">
-            {Array.from({ length: MAX_GUESSES }, (_, i) => i + 1).map((guessNum) => {
-              const count = stats.guessDistribution[guessNum] || 0;
-              const percentage = maxDistribution > 0 ? (count / maxDistribution) * 100 : 0;
-              const barColor = count > 0 ? 'bg-gray-400' : 'bg-gray-100';
-
-              return (
-                <div key={guessNum} className="flex items-center gap-2">
-                  <span className="w-4 text-sm font-medium text-gray-600">{guessNum}</span>
-                  <div className="flex-1 h-6 bg-gray-200 rounded overflow-hidden">
-                    <div
-                      className={`h-full ${barColor} rounded flex items-center justify-end px-2 animate-bar-fill`}
-                      style={{ width: `${Math.max(percentage, count > 0 ? 8 : 0)}%`, animationDelay: `${(guessNum - 1) * 0.08}s` }}
-                    >
-                      {count > 0 && (
-                        <span className="text-white text-sm font-bold">{count}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* How You Compare */}
-        {stats.gamesWon > 0 && (
-          <div className="bg-surface rounded-lg p-4 sm:p-6 mb-6">
-            <h3 className="text-lg sm:text-xl font-bold text-white text-center mb-3">
-              How You Compare
-            </h3>
-            {percentileBeat !== null ? (
-              <div className="text-center">
-                <p className="text-3xl font-bold text-yellow-400">
-                  Top {100 - percentileBeat}%
-                </p>
-                <p className="text-sm text-gray-200 mt-1">
-                  You beat <span className="font-semibold">{percentileBeat}%</span> of players based on guess count
-                </p>
-              </div>
-            ) : globalStats === null ? (
-              <p className="text-center text-gray-300 text-sm">Loading global stats...</p>
-            ) : (
-              <p className="text-center text-gray-300 text-sm">Not enough data yet</p>
-            )}
-            <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
-              <div>
-                <p className="text-gray-300">Win Rate</p>
-                <p className="font-bold text-white">{winRate}%</p>
-              </div>
-              <div>
-                <p className="text-gray-300">Avg Guess #</p>
-                <p className="font-bold text-white">{userAvgGuesses > 0 ? userAvgGuesses.toFixed(1) : '-'}</p>
-              </div>
-              <div>
-                <p className="text-gray-300">Avg Guess Time</p>
-                <p className="font-bold text-white">{avgGuessTime > 0 ? `${avgGuessTime.toFixed(1)}s` : '-'}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg transition-all"
-        >
-          Close
-        </button>
+      {/* Stat cards */}
+      <div className="mb-4">
+        <StatRow stats={stats} winRate={winRate} />
       </div>
-    </div>
+
+      {/* Guess Distribution */}
+      <div className="rounded-xl p-4 mb-5 bg-white/[0.04] border border-white/[0.08]">
+        <h3 className="text-lg font-bold text-white text-center mb-3">Guess Distribution</h3>
+        {stats.gamesPlayed > 0 ? (
+          <GuessDistribution distribution={stats.guessDistribution} />
+        ) : (
+          <p className="text-center text-white/50 text-sm py-2">
+            Play a game to see your distribution!
+          </p>
+        )}
+      </div>
+
+      {/* How You Compare */}
+      {stats.gamesWon > 0 && (
+        <div
+          className="rounded-xl p-4 mb-5"
+          style={{
+            background: 'linear-gradient(155deg, rgba(245,158,11,0.12), rgba(61,77,104,0.42))',
+            border: '1px solid rgba(255,255,255,0.10)',
+          }}
+        >
+          <h3 className="text-base font-bold text-white text-center mb-3">How You Compare</h3>
+          {percentileBeat !== null ? (
+            <div className="text-center">
+              <p className="text-3xl font-extrabold" style={{ color: '#fbbf24' }}>
+                Top {100 - percentileBeat}%
+              </p>
+              <p className="text-sm text-white/70 mt-1">
+                You beat <span className="font-semibold text-white/90">{percentileBeat}%</span> of
+                players based on guess count
+              </p>
+            </div>
+          ) : globalStats === null ? (
+            <p className="text-center text-white/50 text-sm">Loading global stats...</p>
+          ) : (
+            <p className="text-center text-white/50 text-sm">Not enough data yet</p>
+          )}
+          <div className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
+            <div>
+              <p className="text-white/60">Win Rate</p>
+              <p className="font-bold text-white">{winRate}%</p>
+            </div>
+            <div>
+              <p className="text-white/60">Avg Guess #</p>
+              <p className="font-bold text-white">{userAvgGuesses > 0 ? userAvgGuesses.toFixed(1) : '-'}</p>
+            </div>
+            <div>
+              <p className="text-white/60">Avg Time</p>
+              <p className="font-bold text-white">{avgGuessTime > 0 ? `${avgGuessTime.toFixed(1)}s` : '-'}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="w-full px-6 py-3 font-bold text-white rounded-xl transition-colors bg-white/10 hover:bg-white/[0.16]"
+      >
+        Close
+      </button>
+    </ModalShell>
   );
 }

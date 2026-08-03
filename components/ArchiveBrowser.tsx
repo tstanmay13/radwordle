@@ -45,12 +45,12 @@ export default function ArchiveBrowser() {
               key={day.dayNumber}
               href={isToday ? '/' : `/archive/${day.dayNumber}`}
               prefetch={false}
-              className={`relative flex flex-col items-center justify-center rounded-lg p-2.5 sm:p-3 transition-all duration-150 ${
+              className={`relative flex flex-col items-center justify-center rounded-xl p-2.5 sm:p-3 border border-white/[0.08] transition-transform duration-150 active:scale-95 ${
                 isWon
-                  ? 'bg-success/80 hover:bg-success ring-1 ring-success/50'
+                  ? 'bg-success/80 hover:bg-success'
                   : isLost
-                    ? 'bg-error/60 hover:bg-error/80 ring-1 ring-error/40'
-                    : 'bg-surface hover:bg-surface-hover ring-1 ring-white/5'
+                    ? 'bg-error/60 hover:bg-error/80'
+                    : 'bg-surface/85 hover:bg-surface-hover'
               }`}
             >
               {isToday && (

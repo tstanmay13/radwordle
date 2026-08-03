@@ -1,21 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import PlainBackground from '@/components/PlainBackground';
 import ArchiveBrowser from '@/components/ArchiveBrowser';
 
 export default function ArchivePage() {
   return (
     <div className="min-h-screen-safe relative overflow-y-auto overflow-x-hidden" style={{ minHeight: 'var(--full-vh)' }}>
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-page-bg via-page-bg-mid to-page-bg">
-        {/* Radial Vignette */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(ellipse at center, transparent 0%, transparent 45%, rgba(0, 0, 0, 0.3) 70%, rgba(0, 0, 0, 0.75) 88%, rgba(0, 0, 0, 0.9) 100%)',
-          }}
-        ></div>
-      </div>
+      {/* Plain dark base */}
+      <PlainBackground />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen-safe flex flex-col" style={{ minHeight: 'var(--full-vh)' }}>
@@ -24,9 +16,11 @@ export default function ArchivePage() {
           {/* Back Button */}
           <Link
             href="/"
-            className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors flex-shrink-0"
+            className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-white rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.12] transition-colors flex-shrink-0"
           >
-            <span className="text-xl sm:text-2xl">←</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+            </svg>
           </Link>
 
           {/* Logo and Title - Centered, clickable to return home */}
@@ -51,7 +45,7 @@ export default function ArchivePage() {
         {/* Archive Title */}
         <div className="text-center mb-8">
           <h2 className="text-3xl text-white font-bold font-baloo-2">Archive</h2>
-          <p className="text-gray-300 mt-2 font-baloo-2">Play any past puzzle!</p>
+          <p className="text-white/60 mt-2 font-baloo-2">Play any past puzzle!</p>
         </div>
 
         {/* Archive Browser */}
