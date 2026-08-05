@@ -101,12 +101,16 @@
   }
 }
 
+/* Base paint behind everything. Matches the darkest floor of PageBackground's
+   RADBG gradient (#070c18) so any sliver the decorative background doesn't cover
+   — e.g. the mobile viewport reshuffling when the keyboard opens — blends in
+   instead of flashing the near-black default body color. */
 html {
-  background: var(--color-page-bg-dark);
+  background: #070c18;
 }
 
 body {
-  background: var(--background);
+  background: #070c18;
   color: var(--foreground);
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
