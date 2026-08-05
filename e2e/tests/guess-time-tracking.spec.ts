@@ -128,10 +128,10 @@ test.describe('Guess Time Tracking', () => {
     // Open the Stats modal via the Stats button
     await page.getByText('Stats').first().click();
 
-    // The StatsModal should show Avg Guess Time
+    // The StatsModal should show the average guess time (relabeled "Avg Time")
     const statsModal = page.locator('.fixed.inset-0');
     await expect(statsModal.getByText('Your Statistics')).toBeVisible();
-    await expect(statsModal.getByText('Avg Guess Time')).toBeVisible();
+    await expect(statsModal.getByText('Avg Time')).toBeVisible();
 
     // Close stats modal
     await statsModal.getByRole('button', { name: 'Close' }).click();

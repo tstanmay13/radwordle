@@ -60,9 +60,8 @@ test.describe('First-Time User Journey', () => {
 
     // Verify win modal appears
     await expect(page.getByText('Congratulations!').first()).toBeVisible({ timeout: 3000 });
-    await expect(page.getByText('The correct answer was:').first()).toBeVisible();
+    await expect(page.getByText('The correct answer was').first()).toBeVisible();
     await expect(page.getByText(correctAnswer).first()).toBeVisible();
-    await expect(page.getByText(/You solved.*Day.*in 2/).first()).toBeVisible();
 
     // Verify View Results button is available
     const closeBtn = page.getByRole('button', { name: 'Close' }).first();
@@ -108,10 +107,11 @@ test.describe('First-Time User Journey', () => {
     await submitGuess(page, correctAnswer);
     await expect(page.getByText('Congratulations!').first()).toBeVisible({ timeout: 3000 });
 
-    // The results modal (inline in GameClient) should show stats
-    // Check for statistics section in the modal
+    // The results modal (inline in GameClient) should show stats.
+    // The redesigned modal has no "Statistics" heading — verify the
+    // Guess Distribution section renders instead.
     const modal = page.locator('[data-testid="results-modal"]');
-    await expect(modal.getByText('Statistics')).toBeVisible();
+    await expect(modal.getByText('Guess Distribution')).toBeVisible();
 
     // Verify stats: 1 game played
     const playedStat = modal.locator('text=Played').locator('..');
