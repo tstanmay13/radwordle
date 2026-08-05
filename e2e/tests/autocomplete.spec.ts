@@ -84,23 +84,23 @@ test.describe('Autocomplete & Validation', () => {
     // Press ArrowDown to select first item
     await page.keyboard.press('ArrowDown');
 
-    // First item should have blue highlight (bg-blue-100)
+    // First item should have the selected highlight (redesign uses bg-white/10)
     const firstItem = dropdown.locator('button').first();
-    await expect(firstItem).toHaveClass(/bg-blue-100/);
+    await expect(firstItem).toHaveClass(/bg-white\/10/);
 
     // Press ArrowDown again to move to second item
     await page.keyboard.press('ArrowDown');
 
     // Second item should now be highlighted
     const secondItem = dropdown.locator('button').nth(1);
-    await expect(secondItem).toHaveClass(/bg-blue-100/);
+    await expect(secondItem).toHaveClass(/bg-white\/10/);
 
     // First item should no longer be highlighted
-    await expect(firstItem).not.toHaveClass(/bg-blue-100/);
+    await expect(firstItem).not.toHaveClass(/bg-white\/10/);
 
     // Press ArrowUp to go back
     await page.keyboard.press('ArrowUp');
-    await expect(firstItem).toHaveClass(/bg-blue-100/);
+    await expect(firstItem).toHaveClass(/bg-white\/10/);
   });
 
   test('should select item with Enter key', async ({ page }) => {
@@ -152,8 +152,9 @@ test.describe('Autocomplete & Validation', () => {
     // Validation error should appear
     await expect(page.getByText('Please select a diagnosis from the list')).toBeVisible();
 
-    // Input should have red ring
-    await expect(input).toHaveClass(/ring-red-500/);
+    // Input should be flagged invalid. The redesign styles the error via the
+    // pill border + aria-invalid rather than a ring on the input itself.
+    await expect(input).toHaveAttribute('aria-invalid', 'true');
   });
 
   test('should clear validation error when typing again', async ({ page }) => {

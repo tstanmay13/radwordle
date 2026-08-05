@@ -38,7 +38,7 @@ test.describe('Losing Game Flow', () => {
     await expect(page.getByText('Game Over').first()).toBeVisible({ timeout: 3000 });
 
     // Verify correct answer is shown
-    await expect(page.getByText('The correct answer was:').first()).toBeVisible();
+    await expect(page.getByText('The correct answer was').first()).toBeVisible();
     await expect(page.getByText(correctAnswer).first()).toBeVisible();
   });
 

@@ -50,6 +50,8 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
   // Track initial hint count so only newly revealed hints animate (not restored from save)
   const [baseHintCount, setBaseHintCount] = useState<number | null>(null);
   const baseHintCaptured = useRef(false);
+  // The mobile hints scroll region — auto-scrolled to the newest hint on reveal.
+  const hintsScrollRef = useRef<HTMLDivElement>(null);
 
   // Track whether the image border has appeared (for pulse animation)
   const [showImagePulse, setShowImagePulse] = useState(false);
@@ -71,6 +73,20 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
       prevHadBorder.current = true;
     }
   }, []);
+
+  // When a new hint is revealed during play, scroll the mobile hints region to
+  // the newest one so a hint that lands below the fold isn't missed. The
+  // baseHintCount guard keeps it from firing on initial load of a restored
+  // mid-game. No-op on desktop, where this container isn't the scroll parent
+  // (sm:overflow-visible), so scrollTo has no range.
+  useEffect(() => {
+    if (baseHintCount === null) return;
+    const revealed = gameState?.revealedHints ?? 0;
+    if (revealed <= baseHintCount) return;
+    const el = hintsScrollRef.current;
+    // scrollTo is unimplemented in jsdom — call defensively to keep tests green.
+    el?.scrollTo?.({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [gameState?.revealedHints, baseHintCount]);
 
   // Determine which hints to show based on game state
   // Show all hints when game is complete, otherwise only show revealed hints
@@ -106,23 +122,31 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
     : puzzle.image_url;
 
   return (
-    <div className="min-h-screen-safe relative overflow-y-auto overflow-x-hidden" style={{ minHeight: 'var(--full-vh)' }}>
+    <div
+      className="relative overflow-x-hidden h-[100dvh] overflow-y-hidden sm:h-auto sm:min-h-screen-safe sm:overflow-y-auto"
+      style={{ minHeight: 'var(--full-vh)' }}
+    >
       {/* Animated DICOM/PACS background (fixed on desktop so it doesn't scroll) */}
       <PageBackground />
 
-      {/* Content */}
-      <div className="relative z-10 min-h-screen-safe flex flex-col" style={{ minHeight: 'var(--full-vh)' }}>
+      {/* Content. On mobile this is a locked viewport-height flex column (image
+          pinned top, input in-flow at bottom, hints scroll between) so the
+          keyboard can't push the image out of frame; desktop keeps its natural
+          scrolling min-height layout. */}
+      <div className="relative z-10 flex flex-col h-full sm:h-auto sm:min-h-screen-safe" style={{ minHeight: 'var(--full-vh)' }}>
         {/* Glass top navigation bar */}
         <TopBar
           onStats={() => setShowStats(true)}
           onFeedback={() => setShowFeedback(true)}
         />
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center justify-start sm:justify-start px-4 pt-2 pb-4 sm:pb-4 sm:pt-4">
+        {/* Main Content — mobile: the locked flex column (min-h-0 lets the hints
+            region below scroll instead of pushing the input off-screen). */}
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-start px-4 pt-2 pb-0 sm:pb-4 sm:pt-4">
 
-          {/* Medical Image Display - sticky on mobile so it stays visible when keyboard opens */}
-          <div className="w-full max-w-3xl lg:max-w-4xl mb-3 sm:mb-6 sticky top-0 sm:static z-20 pb-2">
+          {/* Medical Image Display — pinned at the top of the mobile column
+              (shrink-0 keeps it full-size; it never scrolls away). */}
+          <div className="w-full max-w-3xl lg:max-w-4xl mb-3 sm:mb-6 shrink-0 pb-2">
             <div
               className={`relative w-full aspect-[16/9] bg-black rounded-lg overflow-hidden border-2 ${imageBorderColor} shadow-[0_10px_34px_rgba(0,0,0,0.5)] transition-colors duration-300 cursor-pointer${showImagePulse ? ' animate-image-pulse' : ''}`}
               onClick={() => { if (puzzle.image_url && Date.now() - zoomClosedAt.current > 300) { setZoomKey(k => k + 1); setShowZoom(true); } }}
@@ -167,13 +191,17 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
           </div>
 
           {/* Question */}
-          <h2 className="text-xl sm:text-2xl md:text-[1.75rem] text-white font-bold font-baloo-2 mb-2 sm:mb-4 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+          <h2 className="shrink-0 text-xl sm:text-2xl md:text-[1.75rem] text-white font-bold font-baloo-2 mb-2 sm:mb-4 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
             What&apos;s the Diagnosis?
           </h2>
 
-          {/* Hints Display - only show revealed hints */}
+          {/* Hints Display — only show revealed hints. On mobile this is the
+              flex-1 scroll region: it takes the slack between the pinned image
+              and the bottom input, and scrolls internally once the revealed
+              hints outgrow that space (keeping image + input fixed in frame).
+              Desktop keeps its natural page-scrolling flow via the sm: resets. */}
           {visibleHints.length > 0 && (
-            <div className="w-full max-w-2xl mx-auto space-y-2.5 mb-4 sm:mb-6">
+            <div ref={hintsScrollRef} className="w-full max-w-2xl mx-auto space-y-2.5 mb-4 sm:mb-6 flex-1 min-h-0 overflow-y-auto sm:flex-none sm:overflow-visible">
               {visibleHints.map((hint, index) => {
                 // Hints are revealed after a guess. The guess that revealed this hint is at index.
                 // To color the hint based on the NEXT guess after it was revealed, we look at index + 1.

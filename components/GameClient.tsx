@@ -343,10 +343,13 @@ export default function GameClient({
         )}
       </div>
 
-      {/* Mobile layout - input in natural flow */}
-      <div className="sm:hidden w-full">
+      {/* Mobile layout — pinned to the bottom of GamePage's locked column via
+          mt-auto (shrink-0 keeps it from being squeezed). No fixed positioning:
+          with interactive-widget=resizes-content the keyboard shrinks the column
+          and the bar rides up above it, while the image stays pinned at the top. */}
+      <div className="sm:hidden w-full mt-auto shrink-0">
         {gameState.isComplete ? (
-          <div className="text-center text-white text-xl font-baloo-2 font-bold">
+          <div className="text-center text-white text-xl font-baloo-2 font-bold pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
             {gameState.isWon ? (
               <>
                 <p>Congratulations! The answer was:</p>
@@ -366,24 +369,21 @@ export default function GameClient({
             </button>
           </div>
         ) : (
-          <>
-            {/* Input sticky at bottom on mobile - positions directly above keyboard.
-                The "Guess N / 5" label now lives inside the input pill. */}
-            <div className="fixed bottom-0 left-0 right-0 px-4 pb-[env(safe-area-inset-bottom,0px)] bg-gradient-to-t from-page-bg-dark via-page-bg-dark/80 to-transparent pt-4 z-40">
-              <DiagnosisAutocomplete
-                conditions={conditions}
-                onSubmit={handleSubmit}
-                onDropdownStateChange={handleDropdownStateChange}
-                previousGuesses={gameState.guesses}
-                isMobile={true}
-                disabled={!consentGiven}
-                current={gameState.guesses.length + 1}
-                total={MAX_GUESSES}
-              />
-            </div>
-            {/* Spacer to prevent content from being hidden behind fixed input */}
-            <div className="h-20"></div>
-          </>
+          /* Full-bleed gradient scrim (-mx-4 cancels the parent's px-4) fades the
+             scrolling hints out behind the pill; the bottom padding lifts the bar
+             off the edge and clears the safe-area inset. */
+          <div className="-mx-4 px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-page-bg-dark via-page-bg-dark/80 to-transparent">
+            <DiagnosisAutocomplete
+              conditions={conditions}
+              onSubmit={handleSubmit}
+              onDropdownStateChange={handleDropdownStateChange}
+              previousGuesses={gameState.guesses}
+              isMobile={true}
+              disabled={!consentGiven}
+              current={gameState.guesses.length + 1}
+              total={MAX_GUESSES}
+            />
+          </div>
         )}
       </div>
 

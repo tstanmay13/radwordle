@@ -34,18 +34,21 @@ const HOW_TO_PLAY = [
   'Share your results and compare with colleagues!',
 ];
 
-// Team roles from the redesign prototype — placeholder bios; replace with real
-// details before this ships to production.
+// The team — Kishan (left) and Tanmay (right).
 const TEAM = [
   {
-    role: 'Founder & Puzzle Creator',
-    job: 'MS4 at McGovern',
-    bio: 'Curates the daily cases and writes the hints that make each puzzle click.',
+    name: 'Kishan Asokan',
+    title: 'Co-Founder, Puzzle Creator & Platform Lead',
+    job: 'MS4 @ McGovern',
+    bio: "Builds and curates the complete daily case library, writes the accompanying diagnostic hints, designs the platform's UI, and manages releases and updates.",
+    photo: '/headshot/Kishan_Radiordle.jpg',
   },
   {
-    role: 'Tech & Development',
-    job: 'Dev @ X',
-    bio: 'Builds and maintains the app, from the guessing engine to the daily release pipeline.',
+    name: 'Tanmay Singh',
+    title: 'Co-Founder & Tech Lead',
+    job: 'Software Engineer',
+    bio: "Established the platform's data architecture, built the puzzle rotation system and deployment infrastructure, and handles backend fixes and maintenance.",
+    photo: '/headshot/Tanmay_Radiordle.jpg',
   },
 ];
 
@@ -106,16 +109,15 @@ export default function AboutPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {TEAM.map((member) => (
                   <div
-                    key={member.role}
+                    key={member.name}
                     className="flex flex-col items-center text-center rounded-xl p-5 bg-white/[0.04] border border-white/[0.08]"
                   >
-                    <div className="flex items-center justify-center rounded-full mb-3.5 w-[104px] h-[104px] bg-white/[0.06] border border-dashed border-white/[0.22]">
-                      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.32)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
-                      </svg>
+                    <div className="relative mb-3.5 w-[128px] h-[128px] rounded-full overflow-hidden border border-white/[0.15]">
+                      <Image src={member.photo} alt={member.name} fill sizes="128px" className="object-cover" />
                     </div>
-                    <h3 className="font-baloo-2 font-extrabold text-white leading-tight text-lg">{member.role}</h3>
-                    <p className="font-semibold mb-2.5 text-accent-light text-sm">{member.job}</p>
+                    <h3 className="font-baloo-2 font-extrabold text-white leading-tight text-lg">{member.name}</h3>
+                    <p className="font-semibold text-accent-light text-sm">{member.title}</p>
+                    <p className="font-baloo-2 font-semibold text-white/55 text-xs mt-0.5 mb-2.5">{member.job}</p>
                     <p className="text-white/70 text-sm leading-relaxed">{member.bio}</p>
                   </div>
                 ))}
