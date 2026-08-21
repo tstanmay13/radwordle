@@ -1,9 +1,13 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Condition, getGlobalStats, calculatePercentileBeat, getPuzzleGuessDistribution, calculatePuzzlePercentile, GlobalStats } from '@/lib/supabase';
+import { Condition, getGlobalStats, getPuzzleGuessDistribution, calculatePuzzlePercentile, GlobalStats } from '@/lib/supabase';
+import { Share2, Copy, Info, ChevronDown } from 'lucide-react';
 import { getCookieConsent } from './CookieConsent';
 import DiagnosisAutocomplete from './DiagnosisAutocomplete';
+import ModalShell from './ui/ModalShell';
+import StatRow from './ui/StatRow';
+import GuessDistribution from './ui/GuessDistribution';
 import { checkAnswer } from '@/lib/gameLogic';
 import { MAX_GUESSES } from '@/lib/gameLogic';
 import {
@@ -35,6 +39,8 @@ interface GameClientProps {
   correctAnswer: string;
   citation?: string | null;
   learnLink?: string | null;
+  /** Optional "About this condition" blurb for the results modal. */
+  description?: string | null;
   isArchive: boolean;
   onGameStateChange: (state: GameState) => void;
   onTypingStateChange?: (isTyping: boolean) => void;
@@ -75,6 +81,7 @@ export default function GameClient({
   correctAnswer,
   citation,
   learnLink,
+  description,
   isArchive,
   onGameStateChange,
   onTypingStateChange,
@@ -304,16 +311,16 @@ export default function GameClient({
       {/* Desktop layout - normal flow */}
       <div className="hidden sm:block w-full pb-[220px]">
         {gameState.isComplete ? (
-          <div className="text-center text-white text-xl font-baloo-2">
+          <div className="text-center text-white text-xl font-baloo-2 font-bold">
             {gameState.isWon ? (
               <>
                 <p>Congratulations! The answer was:</p>
-                <p className="text-2xl mt-1">{correctAnswer}</p>
+                <p className="text-2xl mt-1 text-accent">{correctAnswer}</p>
               </>
             ) : (
               <>
                 <p>Game Over. The answer was:</p>
-                <p className="text-2xl mt-1">{correctAnswer}</p>
+                <p className="text-2xl mt-1 text-accent">{correctAnswer}</p>
               </>
             )}
             <button
@@ -324,67 +331,59 @@ export default function GameClient({
             </button>
           </div>
         ) : (
-          <>
-            <div className="mb-3 text-white/80 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-              <p className="text-lg tracking-wide font-baloo-2">
-                Guess {gameState.guesses.length + 1} / {MAX_GUESSES}
-              </p>
-            </div>
+          <DiagnosisAutocomplete
+            conditions={conditions}
+            onSubmit={handleSubmit}
+            onDropdownStateChange={handleDropdownStateChange}
+            previousGuesses={gameState.guesses}
+            disabled={!consentGiven}
+            current={gameState.guesses.length + 1}
+            total={MAX_GUESSES}
+          />
+        )}
+      </div>
+
+      {/* Mobile layout — pinned to the bottom of GamePage's locked column via
+          mt-auto (shrink-0 keeps it from being squeezed). No fixed positioning:
+          with interactive-widget=resizes-content the keyboard shrinks the column
+          and the bar rides up above it, while the image stays pinned at the top. */}
+      <div className="sm:hidden w-full mt-auto shrink-0">
+        {gameState.isComplete ? (
+          <div className="text-center text-white text-xl font-baloo-2 font-bold pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {gameState.isWon ? (
+              <>
+                <p>Congratulations! The answer was:</p>
+                <p className="text-2xl mt-1 text-accent">{correctAnswer}</p>
+              </>
+            ) : (
+              <>
+                <p>Game Over. The answer was:</p>
+                <p className="text-2xl mt-1 text-accent">{correctAnswer}</p>
+              </>
+            )}
+            <button
+              onClick={() => setShowModal(true)}
+              className="mt-4 px-6 py-2 bg-gradient-to-r from-accent to-accent-light hover:from-accent hover:to-accent text-black font-bold font-baloo-2 rounded-lg transition-all shadow-lg"
+            >
+              View Results
+            </button>
+          </div>
+        ) : (
+          /* Full-bleed gradient scrim (-mx-4 cancels the parent's px-4) fades the
+             scrolling hints out behind the pill; the bottom padding lifts the bar
+             off the edge and clears the safe-area inset. */
+          <div className="-mx-4 px-4 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-page-bg-dark via-page-bg-dark/80 to-transparent">
             <DiagnosisAutocomplete
               conditions={conditions}
               onSubmit={handleSubmit}
               onDropdownStateChange={handleDropdownStateChange}
               previousGuesses={gameState.guesses}
+              isMobile={true}
               disabled={!consentGiven}
+              current={gameState.guesses.length + 1}
+              total={MAX_GUESSES}
             />
-          </>
-        )}
-      </div>
-
-      {/* Mobile layout - input in natural flow */}
-      <div className="sm:hidden w-full">
-        {gameState.isComplete ? (
-          <div className="text-center text-white text-xl font-baloo-2">
-            {gameState.isWon ? (
-              <>
-                <p>Congratulations! The answer was:</p>
-                <p className="text-2xl mt-1">{correctAnswer}</p>
-              </>
-            ) : (
-              <>
-                <p>Game Over. The answer was:</p>
-                <p className="text-2xl mt-1">{correctAnswer}</p>
-              </>
-            )}
-            <button
-              onClick={() => setShowModal(true)}
-              className="mt-4 px-6 py-2 bg-gradient-to-r from-accent to-accent-light hover:from-accent hover:to-accent text-black font-bold font-baloo-2 rounded-lg transition-all shadow-lg"
-            >
-              View Results
-            </button>
           </div>
-        ) : (
-          <>
-            {/* Guesses counter - in flow */}
-            <div className="mb-3 text-white/80 text-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-              <p className="text-lg tracking-wide font-baloo-2">
-                Guess {gameState.guesses.length + 1} / {MAX_GUESSES}
-              </p>
-            </div>
-            {/* Input sticky at bottom on mobile - positions directly above keyboard */}
-            <div className="fixed bottom-0 left-0 right-0 px-4 pb-[env(safe-area-inset-bottom,0px)] bg-gradient-to-t from-page-bg-dark via-page-bg-dark/80 to-transparent pt-4 z-40">
-              <DiagnosisAutocomplete
-                conditions={conditions}
-                onSubmit={handleSubmit}
-                onDropdownStateChange={handleDropdownStateChange}
-                previousGuesses={gameState.guesses}
-                isMobile={true}
-                disabled={!consentGiven}
-              />
-            </div>
-            {/* Spacer to prevent content from being hidden behind fixed input */}
-            <div className="h-20"></div>
-          </>
         )}
       </div>
 
@@ -396,6 +395,7 @@ export default function GameClient({
           correctAnswer={correctAnswer}
           citation={citation}
           learnLink={learnLink}
+          description={description}
           dayNumber={dayNumber}
           puzzleNumber={puzzleNumber}
           isArchive={isArchive}
@@ -414,11 +414,74 @@ interface ResultsModalProps {
   correctAnswer: string;
   citation?: string | null;
   learnLink?: string | null;
+  /** Optional plain-language blurb about the condition (collapsible section). */
+  description?: string | null;
   dayNumber: number;
   puzzleNumber: number;
   isArchive: boolean;
   onClose: () => void;
   onCopied: () => void;
+}
+
+/** Colored squares — one per guess, tinted by that guess's result. */
+function ResultTiles({ guesses, correctAnswer }: { guesses: string[]; correctAnswer: string }) {
+  return (
+    <div className="flex justify-center gap-1.5 mb-2.5">
+      {Array.from({ length: MAX_GUESSES }).map((_, i) => {
+        const guess = guesses[i];
+        let background = 'rgba(255,255,255,0.05)';
+        let boxShadow: string | undefined;
+        if (guess) {
+          const r = checkAnswer(guess, correctAnswer);
+          background =
+            r === 'correct'
+              ? 'var(--color-success)'
+              : r === 'partial'
+                ? 'var(--color-warning)'
+                : 'var(--color-error)';
+          if (r === 'correct') boxShadow = '0 0 12px rgba(64,119,99,0.65)';
+        }
+        return (
+          <div
+            key={i}
+            className="w-[26px] h-[26px] rounded-[7px] border border-white/[0.14] transition-all"
+            style={{ background, boxShadow }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/** Collapsible "About this condition" blurb. Only rendered when text exists. */
+function ConditionAbout({ text }: { text: string }) {
+  // Collapsed by default on mobile, open on wider screens — approximated with a
+  // simple default-open state (users can toggle on any width).
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="rounded-xl mb-4 overflow-hidden bg-white/[0.04] border border-white/[0.08]">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center justify-between w-full px-4 py-2.5 text-left transition-colors hover:bg-white/[0.04]"
+      >
+        <span className="font-semibold text-white/85 text-sm flex items-center gap-2">
+          <Info size={15} className="text-accent-light" />
+          About this condition
+        </span>
+        <ChevronDown
+          size={16}
+          className="text-white/60 transition-transform"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+      </button>
+      {open && (
+        <div className="px-4 pb-3.5">
+          <p className="text-white/70 text-sm leading-relaxed">{text}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ResultsModal({
@@ -428,18 +491,13 @@ function ResultsModal({
   correctAnswer,
   citation,
   learnLink,
+  description,
   dayNumber,
   puzzleNumber,
   isArchive,
   onClose,
   onCopied,
 }: ResultsModalProps) {
-  // Lock background scroll while modal is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
-
   const stats = getStatistics();
   const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
   const [percentileBeat, setPercentileBeat] = useState<number | null>(null);
@@ -462,12 +520,6 @@ function ResultsModal({
     }
   }, [puzzleNumber, guessCount, isWon]);
 
-  // Find the max value in guess distribution for scaling bars
-  const maxDistribution = Math.max(
-    ...Object.values(stats.guessDistribution),
-    1 // Prevent division by zero
-  );
-
   // Calculate user's average guesses (only counting wins)
   const userAvgGuesses = (() => {
     let totalGuesses = 0;
@@ -488,8 +540,8 @@ function ResultsModal({
     ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
     : 0;
 
-  const handleShare = useCallback(() => {
-    // Generate emoji grid with all 6 boxes
+  // Build the shareable emoji-grid text (used by both Share and Copy).
+  const buildShareText = useCallback(() => {
     const emojiGrid = guesses
       .map((guess) => {
         const result = checkAnswer(guess, correctAnswer);
@@ -498,22 +550,22 @@ function ResultsModal({
         return '🟥'; // Red for incorrect guesses
       })
       .join('');
-
-    // Fill remaining boxes with black (unused clues)
     const unusedBoxes = '⬛'.repeat(MAX_GUESSES - guesses.length);
     const fullGrid = emojiGrid + unusedBoxes;
-
     const displayDay = dayNumber + 1;
     const prefix = isArchive ? '🩻 Radiordle Archive Day' : '🩻 Radiordle Day';
-    const shareText = `${prefix} ${displayDay} ${isWon ? guessCount : 'X'}/${MAX_GUESSES}\n${fullGrid}\nhttps://radiordle.org`;
+    return `${prefix} ${displayDay} ${isWon ? guessCount : 'X'}/${MAX_GUESSES}\n${fullGrid}\nhttps://radiordle.org`;
+  }, [guesses, correctAnswer, dayNumber, isWon, guessCount, isArchive]);
 
+  // Copy to clipboard with a resilient fallback for iOS Safari / older browsers.
+  const copyResults = useCallback(() => {
+    const shareText = buildShareText();
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(shareText).then(
         () => { onCopied(); },
         () => { onCopied(); }
       );
     } else {
-      // Fallback for iOS Safari and browsers without Clipboard API
       try {
         const textArea = document.createElement('textarea');
         textArea.value = shareText;
@@ -529,218 +581,151 @@ function ResultsModal({
         // Silent fail
       }
     }
-  }, [guesses, correctAnswer, dayNumber, isWon, guessCount, isArchive, onCopied]);
+  }, [buildShareText, onCopied]);
 
-  return (
+  // Native share sheet where available (mobile), otherwise fall back to copy.
+  const shareResults = useCallback(() => {
+    const shareText = buildShareText();
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({ title: 'Radiordle', text: shareText }).catch(() => {});
+    } else {
+      copyResults();
+    }
+  }, [buildShareText, copyResults]);
+
+  // "How You Compare" — amber glass box with real puzzle-specific percentile.
+  // Rendered on desktop (in the distribution grid) and again on mobile (below
+  // the action buttons); className controls which one is visible.
+  const renderCompareBox = (className: string) => (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-backdrop-fade"
-      data-testid="results-modal"
-      onClick={onClose}
+      className={`rounded-xl p-4 ${className}`}
+      style={{
+        background: 'linear-gradient(155deg, rgba(245,158,11,0.12), rgba(61,77,104,0.42))',
+        border: '1px solid rgba(255,255,255,0.10)',
+      }}
     >
-      <div
-        className="bg-gradient-to-b from-modal-bg to-page-bg-dark rounded-lg p-4 sm:p-8 max-w-md sm:max-w-2xl w-full shadow-2xl max-h-[90vh] sm:max-h-none overflow-y-auto font-baloo-2 animate-modal-enter"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2 sm:mb-4">
-          {isWon ? '🎉 Congratulations!' : '😔 Game Over'}
-        </h2>
-
-{/* First solver banner - hidden for now but data still tracked */}
-
-
-        <div className="text-white text-center mb-3 sm:mb-6">
-          {isWon ? (
-            <>
-              <p className="text-base sm:text-lg">
-                You solved {isArchive ? 'Archive ' : ''}Day {dayNumber + 1} in {guessCount}{' '}
-                {guessCount === 1 ? 'guess' : 'guesses'}!
-              </p>
-              <p className="text-base sm:text-lg mt-1 font-light">
-                The correct answer was:
-              </p>
-              <p className="text-lg sm:text-xl font-bold text-accent">{correctAnswer}</p>
-            </>
-          ) : (
-            <>
-              <p className="text-base sm:text-lg font-light">
-                The correct answer was:
-              </p>
-              <p className="text-lg sm:text-xl font-bold text-accent">{correctAnswer}</p>
-            </>
-          )}
-          {citation && (
-            <p className="text-xs mt-2 italic text-white/70">
-              {citation}
-            </p>
-          )}
+      <h3 className="text-base font-bold text-white text-center mb-3">How You Compare</h3>
+      {percentileBeat !== null ? (
+        <div className="text-center">
+          <p className="text-3xl font-extrabold" style={{ color: '#fbbf24' }}>
+            Top {100 - percentileBeat}%
+          </p>
+          <p className="text-sm text-white/70 mt-1">
+            You beat <span className="font-semibold text-white/90">{percentileBeat}%</span> of
+            players on this puzzle
+          </p>
         </div>
-
-        {/* Statistics */}
-        <div className="bg-white rounded-lg p-3 sm:p-4 mb-2 sm:mb-4">
-          <h3 className="text-xl sm:text-2xl font-bold text-black text-center mb-1">Statistics</h3>
-          {isArchive && (
-            <p className="text-xs italic text-gray-500 text-center mb-2">Archive puzzles are not included in your statistics.</p>
-          )}
-          <div className="grid grid-cols-4 gap-2 sm:gap-3 text-center">
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-success leading-tight">{stats.gamesPlayed}</p>
-              <p className="text-xs text-gray-600">Played</p>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-success leading-tight">
-                {stats.gamesPlayed > 0
-                  ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
-                  : 0}
-              </p>
-              <p className="text-xs text-gray-600">Win %</p>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-success leading-tight">{stats.currentStreak}</p>
-              <p className="text-xs text-gray-600">Streak</p>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-bold text-success leading-tight">{stats.maxStreak}</p>
-              <p className="text-xs text-gray-600">Max Streak</p>
-            </div>
-          </div>
+      ) : globalStats === null ? (
+        <p className="text-center text-white/50 text-sm">Loading stats...</p>
+      ) : (
+        <p className="text-center text-white/50 text-sm">Not enough data yet</p>
+      )}
+      <div className="mt-3 grid grid-cols-3 gap-3 text-center text-sm">
+        <div>
+          <p className="text-white/60">Win Rate</p>
+          <p className="font-bold text-white">{winRate}%</p>
         </div>
-
-        {/* Guess Distribution + How You Compare: stacked on mobile, side-by-side on desktop */}
-        <div className={`mb-3 sm:mb-4${stats.gamesWon > 0 ? ' sm:grid sm:grid-cols-2 sm:gap-4' : ''}`}>
-          {/* Guess Distribution */}
-          <div className="bg-white rounded-lg p-3 sm:p-4 mb-3 sm:mb-0">
-            <h3 className="text-lg sm:text-xl font-bold text-black text-center mb-2 sm:mb-3">
-              Guess Distribution
-            </h3>
-            <div className="space-y-1 sm:space-y-2">
-              {Array.from({ length: MAX_GUESSES }, (_, i) => i + 1).map((guessNum) => {
-                const count = stats.guessDistribution[guessNum] || 0;
-                const percentage = maxDistribution > 0 ? (count / maxDistribution) * 100 : 0;
-                const isCurrentGuess = isWon && guessNum === guessCount;
-                const barColor = count > 0 ? (isCurrentGuess ? 'bg-success' : 'bg-gray-400') : 'bg-gray-100';
-
-                return (
-                  <div key={guessNum} className="flex items-center gap-2">
-                    <span className="w-4 text-sm font-medium text-gray-600">{guessNum}</span>
-                    <div className="flex-1 h-5 sm:h-6 bg-gray-200 rounded overflow-hidden">
-                      <div
-                        className={`h-full ${barColor} rounded flex items-center justify-end px-2 animate-bar-fill`}
-                        style={{ width: `${Math.max(percentage, count > 0 ? 8 : 0)}%`, animationDelay: `${(guessNum - 1) * 0.08}s` }}
-                      >
-                        {count > 0 && (
-                          <span className="text-white text-sm font-bold">{count}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* How You Compare — desktop only (hidden on mobile, shown after buttons there) */}
-          {isWon && (
-            <div className="hidden sm:block bg-surface rounded-lg p-4">
-              <h3 className="text-lg sm:text-xl font-bold text-white text-center mb-3">
-                How You Compare
-              </h3>
-              {percentileBeat !== null ? (
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-yellow-400">
-                    Top {100 - percentileBeat}%
-                  </p>
-                  <p className="text-sm text-gray-200 mt-1">
-                    You beat <span className="font-semibold">{percentileBeat}%</span> of players on this puzzle
-                  </p>
-                </div>
-              ) : globalStats === null ? (
-                <p className="text-center text-gray-300 text-sm">Loading stats...</p>
-              ) : (
-                <p className="text-center text-gray-300 text-sm">Not enough data yet</p>
-              )}
-              <div className="mt-3 grid grid-cols-3 gap-3 text-center text-sm">
-                <div>
-                  <p className="text-gray-300">Win Rate</p>
-                  <p className="font-bold text-white">{winRate}%</p>
-                </div>
-                <div>
-                  <p className="text-gray-300">Avg Guess #</p>
-                  <p className="font-bold text-white">{userAvgGuesses > 0 ? userAvgGuesses.toFixed(1) : '-'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-300">Avg Time</p>
-                  <p className="font-bold text-white">{avgGuessTime > 0 ? `${avgGuessTime.toFixed(1)}s` : '-'}</p>
-                </div>
-              </div>
-            </div>
-          )}
+        <div>
+          <p className="text-white/60">Avg Guess #</p>
+          <p className="font-bold text-white">{userAvgGuesses > 0 ? userAvgGuesses.toFixed(1) : '-'}</p>
         </div>
-
-        {/* Share Button */}
-        <button
-          onClick={handleShare}
-          className={`w-full px-6 py-3 bg-gradient-to-r from-accent to-accent-light hover:from-accent hover:to-accent text-black font-bold text-lg rounded-lg transition-all shadow-lg ${learnLink ? 'mb-3' : 'mb-4'}`}
-        >
-          Share Results
-        </button>
-
-        {/* Learn More Button */}
-        {learnLink?.startsWith('http') && (
-          <a
-            href={learnLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full px-6 py-3 bg-gradient-to-r from-[#0891b2] to-[#0e7490] hover:from-[#0e7490] hover:to-[#0e7490] text-white font-bold text-lg rounded-lg transition-all shadow-lg mb-4 text-center"
-          >
-            Learn More
-          </a>
-        )}
-
-        {/* How You Compare — mobile only (hidden on desktop, shown above in grid there) */}
-        {isWon && (
-          <div className="sm:hidden bg-surface rounded-lg p-3 mb-4">
-            <h3 className="text-lg font-bold text-white text-center mb-3">
-              How You Compare
-            </h3>
-            {percentileBeat !== null ? (
-              <div className="text-center">
-                <p className="text-3xl font-bold text-yellow-400">
-                  Top {100 - percentileBeat}%
-                </p>
-                <p className="text-sm text-gray-200 mt-1">
-                  You beat <span className="font-semibold">{percentileBeat}%</span> of players on this puzzle
-                </p>
-              </div>
-            ) : globalStats === null ? (
-              <p className="text-center text-gray-300 text-sm">Loading stats...</p>
-            ) : (
-              <p className="text-center text-gray-300 text-sm">Not enough data yet</p>
-            )}
-            <div className="mt-3 grid grid-cols-3 gap-3 text-center text-sm">
-              <div>
-                <p className="text-gray-300">Win Rate</p>
-                <p className="font-bold text-white">{winRate}%</p>
-              </div>
-              <div>
-                <p className="text-gray-300">Avg Guess #</p>
-                <p className="font-bold text-white">{userAvgGuesses > 0 ? userAvgGuesses.toFixed(1) : '-'}</p>
-              </div>
-              <div>
-                <p className="text-gray-300">Avg Time</p>
-                <p className="font-bold text-white">{avgGuessTime > 0 ? `${avgGuessTime.toFixed(1)}s` : '-'}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg transition-all"
-        >
-          Close
-        </button>
+        <div>
+          <p className="text-white/60">Avg Time</p>
+          <p className="font-bold text-white">{avgGuessTime > 0 ? `${avgGuessTime.toFixed(1)}s` : '-'}</p>
+        </div>
       </div>
     </div>
+  );
+
+  return (
+    <ModalShell
+      onClose={onClose}
+      maxWidthClass="max-w-[460px] sm:max-w-[640px]"
+      showClose
+      ariaLabel="Game results"
+      testId="results-modal"
+    >
+      {/* Header: title, result tiles, gradient answer */}
+      <div className="text-center mb-5">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+          {isWon ? '🎉 Congratulations!' : '😔 Game Over'}
+        </h2>
+        <ResultTiles guesses={guesses} correctAnswer={correctAnswer} />
+        <p className="text-sm sm:text-base text-white/55 mb-1">The correct answer was</p>
+        <p
+          className="font-extrabold leading-tight text-[22px] sm:text-[27px]"
+          style={{
+            backgroundImage: 'linear-gradient(90deg, #fbbf24, #f59e0b)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+            textWrap: 'balance',
+          }}
+        >
+          {correctAnswer}
+        </p>
+        {citation && <p className="text-xs mt-2 italic text-white/45">{citation}</p>}
+      </div>
+
+      {/* About this condition (only when a description is supplied) */}
+      {description && <ConditionAbout text={description} />}
+
+      {/* Stat cards */}
+      <div className="mb-4">
+        {isArchive && (
+          <p className="text-xs italic text-white/40 text-center mb-2">
+            Archive puzzles are not included in your statistics.
+          </p>
+        )}
+        <StatRow stats={stats} winRate={winRate} />
+      </div>
+
+      {/* Guess Distribution + How You Compare (side-by-side on desktop when won) */}
+      <div className={isWon ? 'sm:grid sm:grid-cols-2 sm:gap-4 mb-4' : 'mb-4'}>
+        <div className="rounded-xl p-3 sm:p-4 mb-3 sm:mb-0 bg-white/[0.04] border border-white/[0.08]">
+          <h3 className="text-base font-bold text-white text-center mb-3">Guess Distribution</h3>
+          <GuessDistribution
+            distribution={stats.guessDistribution}
+            highlight={isWon ? guessCount : null}
+          />
+        </div>
+        {isWon && renderCompareBox('hidden sm:block')}
+      </div>
+
+      {/* Share + Copy actions */}
+      <div className="flex gap-3 mb-3">
+        <button
+          onClick={shareResults}
+          className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 font-bold text-black text-base rounded-xl shadow-lg transition-transform active:scale-95"
+          style={{ background: 'linear-gradient(to right, var(--color-accent), var(--color-accent-light))' }}
+        >
+          <Share2 size={17} />
+          Share
+        </button>
+        <button
+          onClick={copyResults}
+          className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 font-bold text-white/85 text-base rounded-xl transition-colors bg-white/[0.07] hover:bg-white/[0.13] border border-white/[0.14]"
+        >
+          <Copy size={16} />
+          Copy
+        </button>
+      </div>
+
+      {/* Learn More */}
+      {learnLink?.startsWith('http') && (
+        <a
+          href={learnLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full px-6 py-2.5 font-bold text-center text-base rounded-xl shadow-lg transition-transform active:scale-95"
+          style={{ background: 'linear-gradient(to right, #8fb3e6, #6f97d6)', color: '#10203f' }}
+        >
+          Learn More
+        </a>
+      )}
+
+      {/* How You Compare — mobile only (below actions) */}
+      {isWon && renderCompareBox('sm:hidden mt-4')}
+    </ModalShell>
   );
 }

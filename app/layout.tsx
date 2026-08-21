@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Baloo_2 } from "next/font/google";
+import { Inter, Baloo_2 } from "next/font/google";
 import "./globals.css";
 import CookieConsent from "@/components/CookieConsent";
 import StatsRecoveryProvider from "@/components/StatsRecoveryProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Body font (design system)
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
+// Display font — headings, wordmark, buttons
 const baloo2 = Baloo_2({
   variable: "--font-baloo-2",
   subsets: ["latin"],
-  weight: ["800"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -189,7 +189,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${baloo2.variable} antialiased`}
+        className={`${inter.variable} ${baloo2.variable} antialiased`}
         suppressHydrationWarning
       >
         {children}

@@ -90,7 +90,7 @@ describe('DiagnosisAutocomplete', () => {
 
       // First item selected (Pneumonia or Pneumothorax)
       const buttons = screen.getAllByRole('button', { name: /Pneum/ })
-      expect(buttons[0]).toHaveClass('bg-blue-100')
+      expect(buttons[0]).toHaveClass('bg-white/10')
     })
 
     it('escape closes dropdown', async () => {
@@ -134,7 +134,7 @@ describe('DiagnosisAutocomplete', () => {
       // Should skip Pneumothorax and select Pneumonia
       const buttons = screen.getAllByRole('button', { name: /Pneum/ })
       const nonDisabledSelected = buttons.find(
-        btn => btn.classList.contains('bg-blue-100') && !btn.hasAttribute('disabled')
+        btn => btn.classList.contains('bg-white/10') && !btn.hasAttribute('disabled')
       )
       expect(nonDisabledSelected).toBeDefined()
     })

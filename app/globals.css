@@ -18,6 +18,20 @@
   --color-page-bg-dark: #0f172a;
   --color-modal-bg: #1e3a5f;
   --color-footer-bg: #1a2744;
+
+  /* Softer image-border "ring" colors (result feedback on the X-ray card) */
+  --color-ring-success: #5a9d86;
+  --color-ring-warning: #e6c84f;
+  --color-ring-error: #c4736b;
+
+  /* Glass surface tokens — shared by navbar, modals, and glass primitives */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  /* Blur radius kept modest: backdrop-filter re-samples every scroll frame, and
+     cost scales with radius. 14px still reads as glass but is much cheaper than
+     the original 22px, which noticeably smooths scrolling. */
+  --glass-blur: blur(14px) saturate(140%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 @theme inline {
@@ -36,8 +50,11 @@
   --color-page-bg-dark: var(--color-page-bg-dark);
   --color-modal-bg: var(--color-modal-bg);
   --color-footer-bg: var(--color-footer-bg);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ring-success: var(--color-ring-success);
+  --color-ring-warning: var(--color-ring-warning);
+  --color-ring-error: var(--color-ring-error);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-baloo-2: var(--font-baloo-2);
 }
 
@@ -84,14 +101,31 @@
   }
 }
 
+/* Base paint behind everything. Matches the darkest floor of PageBackground's
+   RADBG gradient (#070c18) so any sliver the decorative background doesn't cover
+   — e.g. the mobile viewport reshuffling when the keyboard opens — blends in
+   instead of flashing the near-black default body color. */
 html {
-  background: var(--color-page-bg-dark);
+  background: #070c18;
 }
 
 body {
-  background: var(--background);
+  background: #070c18;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+/* Slim glass scrollbars (design foundation) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Mobile viewport height handling for keyboard */
@@ -263,4 +297,25 @@ body {
 
 .animate-zoom-hint {
   animation: zoom-hint 5s ease-out forwards;
+}
+
+/* =========================================================
+   Redesign keyframes (design foundation — used by later chunks:
+   toasts, modals, hint reveal)
+   ========================================================= */
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modalEnter {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes hintReveal {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

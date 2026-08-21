@@ -32,8 +32,10 @@ test.describe('Mobile Responsiveness', () => {
   test('should render mobile layout correctly', async ({ page }) => {
     await waitForGameLoad(page);
 
-    // Verify title is visible (use :visible to skip hidden desktop layout)
-    await expect(page.locator('h1:visible:has-text("Radiordle")')).toBeVisible();
+    // Verify the wordmark is visible. The redesigned nav renders it as a link
+    // (aria-label "Radiordle home"), not an <h1>; :visible skips the hidden
+    // desktop layout.
+    await expect(page.locator('a[aria-label="Radiordle home"]:visible')).toBeVisible();
 
     // Verify no horizontal scroll
     const hasHorizontalScroll = await page.evaluate(() => {
@@ -41,9 +43,16 @@ test.describe('Mobile Responsiveness', () => {
     });
     expect(hasHorizontalScroll).toBe(false);
 
-    // Verify the mobile layout has the fixed bottom input
-    const fixedInput = page.locator('.fixed.bottom-0');
-    await expect(fixedInput).toBeVisible();
+    // The mobile guess bar now sits in-flow at the bottom of the locked,
+    // viewport-height column (no longer position:fixed). Verify it's visible and
+    // pinned in the lower portion of the 844px-tall viewport.
+    const input = getInput(page);
+    await expect(input).toBeVisible();
+    const inputBox = await input.boundingBox();
+    expect(inputBox).not.toBeNull();
+    if (inputBox) {
+      expect(inputBox.y).toBeGreaterThan(844 / 2);
+    }
   });
 
   test('should have properly sized game image', async ({ page }) => {
@@ -90,8 +99,9 @@ test.describe('Mobile Responsiveness', () => {
     // Win modal should appear (use :visible to skip hidden desktop layout)
     await expect(page.locator(':visible:has-text("Congratulations!")').first()).toBeVisible({ timeout: 3000 });
 
-    // Modal should be scrollable and fully visible
-    const modal = page.locator('.max-h-\\[90vh\\]:visible');
+    // Modal should be scrollable and fully visible (redesigned ModalShell panel
+    // caps at max-h-[92vh]).
+    const modal = page.locator('.max-h-\\[92vh\\]:visible');
     await expect(modal).toBeVisible();
 
     // Verify modal fits within viewport
@@ -124,10 +134,13 @@ test.describe('Mobile Responsiveness', () => {
   test('should show stats/archive buttons on mobile', async ({ page }) => {
     await waitForGameLoad(page);
 
-    // Stats button should be visible
-    await expect(page.getByText('Stats').first()).toBeVisible();
+    // Archive accent button is visible directly in the mobile top bar
+    await expect(page.getByRole('link', { name: /archive/i }).first()).toBeVisible();
 
-    // Archives button should be visible
-    await expect(page.getByText('Archives').first()).toBeVisible();
+    // Stats lives inside the mobile hamburger menu — open it, then the visible
+    // (menu) Stats button appears. :visible skips the hidden desktop Stats button
+    // that the dual layout also renders.
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await expect(page.locator('button:has-text("Stats"):visible')).toBeVisible();
   });
 });

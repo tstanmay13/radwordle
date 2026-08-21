@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ZoomIn } from 'lucide-react';
 import { Puzzle, Hint, Condition } from '@/lib/supabase';
 import GameClient from './GameClient';
+import PageBackground from './PageBackground';
+import TopBar from './TopBar';
 import StatsModal from './StatsModal';
 import FeedbackModal from './FeedbackModal';
 import ImageZoomModal from './ImageZoomModal';
@@ -49,6 +50,8 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
   // Track initial hint count so only newly revealed hints animate (not restored from save)
   const [baseHintCount, setBaseHintCount] = useState<number | null>(null);
   const baseHintCaptured = useRef(false);
+  // The mobile hints scroll region — auto-scrolled to the newest hint on reveal.
+  const hintsScrollRef = useRef<HTMLDivElement>(null);
 
   // Track whether the image border has appeared (for pulse animation)
   const [showImagePulse, setShowImagePulse] = useState(false);
@@ -71,6 +74,20 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
     }
   }, []);
 
+  // When a new hint is revealed during play, scroll the mobile hints region to
+  // the newest one so a hint that lands below the fold isn't missed. The
+  // baseHintCount guard keeps it from firing on initial load of a restored
+  // mid-game. No-op on desktop, where this container isn't the scroll parent
+  // (sm:overflow-visible), so scrollTo has no range.
+  useEffect(() => {
+    if (baseHintCount === null) return;
+    const revealed = gameState?.revealedHints ?? 0;
+    if (revealed <= baseHintCount) return;
+    const el = hintsScrollRef.current;
+    // scrollTo is unimplemented in jsdom — call defensively to keep tests green.
+    el?.scrollTo?.({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [gameState?.revealedHints, baseHintCount]);
+
   // Determine which hints to show based on game state
   // Show all hints when game is complete, otherwise only show revealed hints
   const visibleHints = gameState
@@ -80,13 +97,17 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
   // Determine image border color based on first guess result
   // The first guess is made with only the image, so it reflects how helpful the image was
   const firstGuessResult = gameState?.guessResults[0];
-  let imageBorderStyle = '';
+  // Result-colored border on the X-ray card (design: XrayCard). A subtle neutral
+  // border shows before the first guess, then transitions to the softer
+  // success/warning/error ring color. Border-color only — a static paint with no
+  // glow filter — so the feedback stays cheap.
+  let imageBorderColor = 'border-white/[0.12]';
   if (firstGuessResult === 'correct') {
-    imageBorderStyle = 'ring-4 ring-success shadow-[0_0_20px_rgba(64,119,99,0.6)]';
+    imageBorderColor = 'border-ring-success';
   } else if (firstGuessResult === 'partial') {
-    imageBorderStyle = 'ring-4 ring-warning shadow-[0_0_20px_rgba(246,214,86,0.6)]';
+    imageBorderColor = 'border-ring-warning';
   } else if (firstGuessResult === 'incorrect') {
-    imageBorderStyle = 'ring-4 ring-error shadow-[0_0_20px_rgba(158,74,74,0.6)]';
+    imageBorderColor = 'border-ring-error';
   }
 
   // Annotated image: show after first guess if a valid URL is provided
@@ -101,128 +122,33 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
     : puzzle.image_url;
 
   return (
-    <div className="min-h-screen-safe relative overflow-y-auto overflow-x-hidden" style={{ minHeight: 'var(--full-vh)' }}>
-      {/* Gradient Background - fixed on desktop so it doesn't scroll with content */}
-      <div className="absolute sm:fixed inset-0 bg-gradient-to-br from-page-bg via-page-bg-mid to-page-bg pointer-events-none">
-        {/* Background decorative medical images - horizontal on desktop, vertical on mobile */}
-        {/* Desktop layout - horizontal */}
-        <div className="hidden sm:flex absolute inset-0 opacity-20 items-end justify-center pb-8">
-          <div className="relative w-[900px] h-[500px]">
-            <div className="absolute left-0 top-1/2 w-96 h-96 bg-[url('/placeholder-xray.png')] bg-contain bg-no-repeat opacity-40" style={{ transform: 'translateY(-50%) rotate(-8deg)' }}></div>
-            <div className="absolute left-1/2 top-1/2 w-80 h-80 bg-[url('/placeholder-scan.png')] bg-contain bg-no-repeat opacity-35" style={{ transform: 'translate(-50%, -50%) rotate(5deg)' }}></div>
-            <div className="absolute right-0 top-1/2 w-72 h-72 bg-[url('/placeholder-ct.png')] bg-contain bg-no-repeat opacity-30 rounded-full" style={{ transform: 'translateY(-50%) rotate(-12deg)' }}></div>
-          </div>
-        </div>
-        {/* Mobile layout - triangle arrangement behind hint/guess area (bottom half of screen) */}
-        <div className="flex sm:hidden absolute inset-0 opacity-20">
-          <div className="absolute bottom-0 left-0 right-0 h-[55%]">
-            {/* Top center image */}
-            <div className="absolute left-1/2 top-[0%] w-72 h-72 bg-[url('/placeholder-xray.png')] bg-contain bg-no-repeat opacity-40" style={{ transform: 'translateX(-50%) rotate(-8deg)' }}></div>
-            {/* Bottom left image */}
-            <div className="absolute left-[5%] bottom-[5%] w-64 h-64 bg-[url('/placeholder-scan.png')] bg-contain bg-no-repeat opacity-35" style={{ transform: 'rotate(5deg)' }}></div>
-            {/* Bottom right image */}
-            <div className="absolute right-[5%] bottom-[5%] w-64 h-64 bg-[url('/placeholder-ct.png')] bg-contain bg-no-repeat opacity-30 rounded-full" style={{ transform: 'rotate(-12deg)' }}></div>
-          </div>
-        </div>
+    <div
+      className="relative overflow-x-hidden h-[100dvh] overflow-y-hidden sm:h-auto sm:min-h-screen-safe sm:overflow-y-auto"
+      style={{ minHeight: 'var(--full-vh)' }}
+    >
+      {/* Animated DICOM/PACS background (fixed on desktop so it doesn't scroll) */}
+      <PageBackground />
 
-        {/* Radial Vignette - Static, Performance Optimized */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse at center, transparent 0%, transparent 45%, rgba(0, 0, 0, 0.3) 70%, rgba(0, 0, 0, 0.75) 88%, rgba(0, 0, 0, 0.9) 100%)'
-          }}
-        ></div>
-      </div>
+      {/* Content. On mobile this is a locked viewport-height flex column (image
+          pinned top, input in-flow at bottom, hints scroll between) so the
+          keyboard can't push the image out of frame; desktop keeps its natural
+          scrolling min-height layout. */}
+      <div className="relative z-10 flex flex-col h-full sm:h-auto sm:min-h-screen-safe" style={{ minHeight: 'var(--full-vh)' }}>
+        {/* Glass top navigation bar */}
+        <TopBar
+          onStats={() => setShowStats(true)}
+          onFeedback={() => setShowFeedback(true)}
+        />
 
-      {/* Content */}
-      <div className="relative z-10 min-h-screen-safe flex flex-col" style={{ minHeight: 'var(--full-vh)' }}>
-        {/* Header with Logo and Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center p-3 sm:px-6 sm:py-4 gap-0 sm:gap-0">
-          {/* Top row on mobile: Archives and Stats buttons */}
-          <div className="flex justify-between items-center sm:contents">
-            {/* Archives Button - Left side container with fixed width on desktop */}
-            <div className="sm:flex-1 sm:flex sm:justify-start">
-              <Link
-                href="/archive"
-                className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[36px] sm:min-h-[40px] bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors"
-              >
-                <span className="text-base sm:text-xl">📁</span>
-                <span className="font-bold font-baloo-2 text-xs sm:text-base">Archives</span>
-              </Link>
-            </div>
+        {/* Main Content — mobile: the locked flex column (min-h-0 lets the hints
+            region below scroll instead of pushing the input off-screen). */}
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-start px-4 pt-2 pb-0 sm:pb-4 sm:pt-4">
 
-            {/* Logo and Title - Hidden on mobile, shown inline on larger screens */}
-            <div className="hidden sm:flex items-center gap-1 drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)]">
-              <div className="relative w-16 h-16">
-                <Image
-                  src="/radle_icon.svg"
-                  alt="Radiordle Icon"
-                  width={64}
-                  height={64}
-                  className="object-contain"
-                />
-              </div>
-              <h1 className="text-4xl md:text-[3.375rem] text-white font-baloo-2 font-extrabold tracking-tight">
-                Radiordle
-              </h1>
-            </div>
-
-            {/* Stats and Feedback Buttons - Right side container with fixed width on desktop */}
-            <div className="sm:flex-1 sm:flex sm:justify-end">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Link
-                  href="/about"
-                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[36px] sm:min-h-[40px] bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors"
-                  title="Learn More"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5">
-                    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
-                  </svg>
-                  <span className="hidden sm:inline font-bold font-baloo-2 text-xs sm:text-base">About</span>
-                </Link>
-                <button
-                  onClick={() => setShowFeedback(true)}
-                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[36px] sm:min-h-[40px] bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors"
-                  title="Send Feedback"
-                >
-                  <span className="text-base sm:text-xl">💬</span>
-                  <span className="hidden sm:inline font-bold font-baloo-2 text-xs sm:text-base">Feedback</span>
-                </button>
-                <button
-                  onClick={() => setShowStats(true)}
-                  className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 min-h-[36px] sm:min-h-[40px] bg-surface hover:bg-surface-hover text-white rounded-lg transition-colors"
-                >
-                  <span className="text-base sm:text-xl">📊</span>
-                  <span className="font-bold font-baloo-2 text-xs sm:text-base">Stats</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Logo and Title - Second row on mobile only */}
-          <div className="flex sm:hidden items-center justify-center gap-1.5 drop-shadow-[0_6px_20px_rgba(0,0,0,0.6)] mt-0.5 -mb-0.5">
-            <div className="relative w-14 h-14">
-              <Image
-                src="/radle_icon.svg"
-                alt="Radiordle Icon"
-                width={56}
-                height={56}
-                className="object-contain"
-              />
-            </div>
-            <h1 className="text-[2.5rem] text-white font-baloo-2 font-extrabold tracking-tight">
-              Radiordle
-            </h1>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center justify-start sm:justify-start px-4 pt-2 pb-4 sm:pb-4 sm:pt-4">
-
-          {/* Medical Image Display - sticky on mobile so it stays visible when keyboard opens */}
-          <div className="w-full max-w-3xl lg:max-w-4xl mb-3 sm:mb-6 sticky top-0 sm:static z-20 pb-2">
+          {/* Medical Image Display — pinned at the top of the mobile column
+              (shrink-0 keeps it full-size; it never scrolls away). */}
+          <div className="w-full max-w-3xl lg:max-w-4xl mb-3 sm:mb-6 shrink-0 pb-2">
             <div
-              className={`relative w-full aspect-[16/9] bg-black rounded-lg overflow-hidden shadow-2xl transition-all duration-300 cursor-pointer ${imageBorderStyle}${showImagePulse ? ' animate-image-pulse' : ''}`}
+              className={`relative w-full aspect-[16/9] bg-black rounded-lg overflow-hidden border-2 ${imageBorderColor} shadow-[0_10px_34px_rgba(0,0,0,0.5)] transition-colors duration-300 cursor-pointer${showImagePulse ? ' animate-image-pulse' : ''}`}
               onClick={() => { if (puzzle.image_url && Date.now() - zoomClosedAt.current > 300) { setZoomKey(k => k + 1); setShowZoom(true); } }}
               role="button"
               tabIndex={0}
@@ -257,7 +183,7 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
               )}
               {/* Zoom indicator icon */}
               {puzzle.image_url && (
-                <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm rounded-full p-1.5 text-white/80 pointer-events-none">
+                <div className="absolute bottom-3 right-3 bg-black/50 rounded-full p-1.5 text-white/80 pointer-events-none">
                   <ZoomIn size={20} />
                 </div>
               )}
@@ -265,13 +191,17 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
           </div>
 
           {/* Question */}
-          <h2 className="text-xl sm:text-2xl md:text-[1.75rem] text-white font-bold font-baloo-2 mb-2 sm:mb-4 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+          <h2 className="shrink-0 text-xl sm:text-2xl md:text-[1.75rem] text-white font-bold font-baloo-2 mb-2 sm:mb-4 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
             What&apos;s the Diagnosis?
           </h2>
 
-          {/* Hints Display - only show revealed hints */}
+          {/* Hints Display — only show revealed hints. On mobile this is the
+              flex-1 scroll region: it takes the slack between the pinned image
+              and the bottom input, and scrolls internally once the revealed
+              hints outgrow that space (keeping image + input fixed in frame).
+              Desktop keeps its natural page-scrolling flow via the sm: resets. */}
           {visibleHints.length > 0 && (
-            <div className="w-full max-w-2xl mx-auto space-y-2.5 mb-4 sm:mb-6">
+            <div ref={hintsScrollRef} className="w-full max-w-2xl mx-auto space-y-2.5 mb-4 sm:mb-6 flex-1 min-h-0 overflow-y-auto sm:flex-none sm:overflow-visible">
               {visibleHints.map((hint, index) => {
                 // Hints are revealed after a guess. The guess that revealed this hint is at index.
                 // To color the hint based on the NEXT guess after it was revealed, we look at index + 1.
@@ -306,7 +236,7 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
                 return (
                   <div
                     key={hint.id}
-                    className={`relative ${hintStyle} ${textColor} rounded-xl px-5 py-3.5 transition-all duration-300 border border-white/10 shadow-md${isNewHint ? ' animate-hint-reveal' : ''}`}
+                    className={`relative ${hintStyle} ${textColor} rounded-xl px-5 py-3.5 transition-colors duration-300 border border-white/10 shadow-md${isNewHint ? ' animate-hint-reveal' : ''}`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold font-baloo-2">
@@ -330,6 +260,7 @@ export default function GamePage({ puzzle, hints, conditions, dayNumber, isArchi
             correctAnswer={puzzle.answer}
             citation={puzzle.citation}
             learnLink={puzzle.learn_link}
+            description={puzzle.condition_description}
             isArchive={isArchive}
             onGameStateChange={handleGameStateChange}
           />

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Throwaway redesign prototype — reference only, never shipped.
+    "design-reference/**",
   ]),
 ]);
 
